@@ -1,0 +1,35 @@
+{
+  "compilerOptions": {
+    // Base Options recommended for all projects
+    "outDir": "dist",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "target": "es2022",
+    "allowJs": true,
+    "resolveJsonModule": true,
+    "moduleDetection": "force",
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    // Enable strict type checking so you can catch bugs early
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "sourceMap": true,
+    "jsx": "react",
+    "declaration": true,
+    "declarationMap": true,
+    // Transpile our TypeScript code to JavaScript
+    "module": "NodeNext",
+    "lib": [
+      "es2022"
+    ]
+  },
+  // Include the necessary files for your project
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}
