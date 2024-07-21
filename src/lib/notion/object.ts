@@ -9,7 +9,6 @@ export interface QueryDatabaseResponse {
   page?: Record<string, never>
 }
 
-// common interfaces
 interface User {
   object: string
   id: string
@@ -95,8 +94,6 @@ export interface RichText {
   equation?: Equation
 }
 
-// Page object
-// https://developers.notion.com/reference/page
 export interface Page {
   object: string
   id: string

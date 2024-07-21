@@ -6,20 +6,6 @@ export interface QueryDatabase {
   start_cursor?: string
 }
 
-// export interface RetrieveDatabase {
-//   database_id: string
-// }
-
-// export interface RetrieveBlock {
-//   block_id: string
-// }
-
-export interface RetrieveBlockChildren {
-  block_id: string
-  page_size?: number
-  start_cursor?: string
-}
-
 export interface PropertyFilterObject {
   property: string
 

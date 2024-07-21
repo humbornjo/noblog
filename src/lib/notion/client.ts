@@ -8,7 +8,7 @@ import type * as request from './request.ts'
 const NOTION_API_SECRET = process.env.NOTION_API_SECRET ?? ''
 const NOBLOG_DATABASE_ID = process.env.NOBLOG_DATABASE_ID ?? ''
 
-const client = new Client({
+export const client = new Client({
   auth: NOTION_API_SECRET,
 })
 
