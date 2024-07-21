@@ -10,6 +10,8 @@ the pattern would be like notablog, but more flexiable thanks to the mighty powe
 * \[scheduling\] use [remark](https://github.com/remarkjs/remark) to convert md to html
 
 # Reference 
+I really appreciate their work and effort, but their code just sucks. And I refactor some :|
+
 * [notion api](https://developers.notion.com/reference/intro)
 * [notion sdk](https://developers.notion.com/docs/getting-started)
 * [notion-to-md](https://github.com/souvikinator/notion-to-md)
