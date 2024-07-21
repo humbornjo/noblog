@@ -10,7 +10,7 @@ type MdBlock = {
   children: MdBlock[];
 };
 
-type MdJelly = {
+export type MdJelly = {
   content: string;    // markdown content
   children: string[]; // child_page
 }
@@ -21,7 +21,6 @@ const n2m = new NotionToMarkdown({ notionClient: notion_client });
 
 n2m.setCustomTransformer("child_page", async (block) => {
   const page = block as any;
-  console.log(block)
   if (!page?.id) return false;
   return `[${page.child_page.title}](${page.id}.md)`;
 });
@@ -31,19 +30,19 @@ export async function GenMarkdown(page_id: string, recursive: boolean = true) {
     return MarkdownCache[page_id]
   }
   const blocks = await n2m.pageToMarkdown(page_id)
-  const jelly = block2Markdown(blocks, recursive);
+  const jelly = await block2Markdown(blocks, recursive);
   MarkdownCache[page_id] = jelly;
   return jelly;
 }
 
-function block2Markdown(blocks: MdBlock[], recursive: boolean): MdJelly {
+async function block2Markdown(blocks: MdBlock[], recursive: boolean): Promise<MdJelly> {
   let jelly: MdJelly = { content: "", children: [] }
   for (const block of blocks) {
-    const subjelly = block2Markdown(block.children, recursive);
+    const subjelly = await block2Markdown(block.children, recursive);
 
     if (block.type === "toggle") {
       jelly.content += cvtmd.toggle(block.parent, subjelly.content);
-      jelly.children = jelly.children.concat(subjelly.children)
+      jelly.children = [...jelly.children, ...subjelly.children]
       continue;
     }
     let line_wrap = "";
@@ -55,10 +54,12 @@ function block2Markdown(blocks: MdBlock[], recursive: boolean): MdJelly {
       line_wrap = "\n";
     }
     jelly.content += (line_wrap + `${cvtmd.addTabSpace(block.parent, nestingLevel)}\n` + line_wrap);
-    jelly.content += subjelly.content;
-    jelly.children = jelly.children.concat(subjelly.children)
-    if (block.type === "child_page" && recursive) {
-      GenMarkdown(block.blockId, recursive)
+    if (block.type === "child_page") {
+      jelly.children = [...jelly.children, block.blockId]
+      if (recursive) await GenMarkdown(block.blockId, recursive);
+    } else {
+      jelly.content += subjelly.content;
+      jelly.children = [...jelly.children, ...subjelly.children]
     }
   }
   return jelly;

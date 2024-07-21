@@ -8,7 +8,7 @@
 	"types": "dist/index.d.ts",
 	"type": "module",
 	"bin": {
-		"notablog": "bin/cli.js"
+		"noblog": "dist/cmds/generate.js"
 	},
 	"scripts": {
 		"dev": "tsc && node ./dist/index.js",
