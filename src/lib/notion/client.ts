@@ -14,23 +14,19 @@ export const client = new Client({
 
 const numberOfRetry = 2
 
-export async function getAllPosts(): Promise<Page[]> {
+export async function GetAllPosts(): Promise<Page[]> {
   const params: request.QueryDatabase = {
     database_id: NOBLOG_DATABASE_ID,
     filter: {
-      and: [
-        {
-          property: 'publish',
-          checkbox: { equals: true, },
-        },
-      ],
+      and: [{
+        property: 'publish',
+        checkbox: { equals: true, },
+      }]
     },
-    sorts: [
-      {
-        property: 'date',
-        direction: 'descending',
-      },
-    ],
+    sorts: [{
+      property: 'date',
+      direction: 'descending',
+    }],
     page_size: 100,
   }
 
@@ -50,18 +46,11 @@ export async function getAllPosts(): Promise<Page[]> {
           }
           throw error
         }
-      },
-      {
-        retries: numberOfRetry,
-      }
+      }, { retries: numberOfRetry, }
     )
 
     results = results.concat(res.results)
-
-    if (!res.has_more) {
-      break
-    }
-
+    if (!res.has_more) { break }
     params['start_cursor'] = res.next_cursor as string
   }
 

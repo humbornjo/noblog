@@ -1,18 +1,20 @@
-export * from './lib/nomd.js'
+export * from './lib/nomd/nomd.js'
+export * from './lib/notion/client.js'
 
 // ---------------- test -----------------
 import 'dotenv/config'
-import { GenMarkdown, MarkdownCache } from './lib/nomd.js'
-import { getAllPosts } from './lib/notion/client.js'
+import { Noblog } from './lib/nomd/nomd.js'
+import { GetAllPosts } from './lib/notion/client.js'
 
+const nob = new Noblog();
 
-getAllPosts().then(res => {
+GetAllPosts().then(res => {
   // client.pages.retrieve({ page_id: res[0]?.id } as any).then(
   //   res => console.log(res))
   //
-  GenMarkdown(res[5]?.id as any).then(
+  nob.FromPageid(res[5]?.id as any).then(
     res => {
-      console.log(MarkdownCache)
+      console.log(nob.MdCollection)
     }
   )
   // client.blocks.children.list({ block_id: res[0]?.id } as any).then(
