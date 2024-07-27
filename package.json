@@ -8,7 +8,7 @@
 	"types": "dist/index.d.ts",
 	"type": "module",
 	"bin": {
-		"noblog": "dist/cmds/generate.js"
+		"noblog": "node dist/cmds/generate.js"
 	},
 	"scripts": {
 		"dev": "tsc && node ./dist/index.js",
@@ -25,6 +25,7 @@
 		"dotenv": "^16.4.5",
 		"markdown-table": "^3.0.3",
 		"node-fetch": "^3.3.2",
-		"notion-to-md": "^3.1.1"
+		"notion-to-md": "^3.1.1",
+		"tslog": "^4.9.3"
 	}
 }

@@ -29,6 +29,9 @@ importers:
       notion-to-md:
         specifier: ^3.1.1
         version: 3.1.1
+      tslog:
+        specifier: ^4.9.3
+        version: 4.9.3
 
 packages:
 
@@ -127,6 +130,10 @@ packages:
 
   tr46@0.0.3:
     resolution: {integrity: sha512-N3WMsuqV66lT30CrXNbEjx4GEwlow3v6rr4mCcv6prnfwhS01rkgyFdjPNBYd9br7LpXV1+Emh01fHnq2Gdgrw==}
+
+  tslog@4.9.3:
+    resolution: {integrity: sha512-oDWuGVONxhVEBtschLf2cs/Jy8i7h1T+CpdkTNWQgdAF7DhRo2G8vMCgILKe7ojdEkLhICWgI1LYSSKaJsRgcw==}
+    engines: {node: '>=16'}
 
   undici-types@5.26.5:
     resolution: {integrity: sha512-JlCMO+ehdEIKqlFxk6IfVoAUVmgz7cU7zD/h9XZ0qzeosSHmUJVOzSQvvYSYWXkFXC+IfLKSIffhv0sVZup6pA==}
@@ -232,6 +239,8 @@ snapshots:
   retry@0.13.1: {}
 
   tr46@0.0.3: {}
+
+  tslog@4.9.3: {}
 
   undici-types@5.26.5: {}
 

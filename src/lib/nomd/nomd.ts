@@ -1,3 +1,5 @@
+import * as fs from 'fs/promises';
+import * as path from 'path';
 import { NotionToMarkdown } from "notion-to-md";
 
 import * as cvtmd from "./cvter.js"
@@ -17,7 +19,7 @@ export type MdJelly = {
 }
 
 export class Noblog extends NotionToMarkdown {
-  public MdCollection: Record<string, MdJelly> = {};
+  MdCollection: Record<string, MdJelly> = {};
 
   constructor() {
     super({ notionClient: notion_client });
@@ -66,5 +68,21 @@ export class Noblog extends NotionToMarkdown {
     const jelly = await this.FromBlocks(blocks, recursive);
     this.MdCollection[page_id] = jelly;
     return jelly;
+  }
+
+  async SaveJelly(fname: string, dir: string, jelly: MdJelly | undefined): Promise<string> {
+    if (jelly === undefined) return `failed: ${fname} has empty jelly: `
+    try {
+      await fs.mkdir(dir, { recursive: true });
+      const filePath = path.join(dir, fname);
+      await fs.writeFile(filePath, jelly.content, 'utf-8');
+      return `success: ${fname} saved to ${filePath}`;
+    } catch (error) {
+      if (error instanceof Error) {
+        return `failed: ${fname} - ${error.message}`;
+      } else {
+        return 'failed: an unknown error occurred';
+      }
+    }
   }
 }
