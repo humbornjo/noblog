@@ -4,7 +4,6 @@ import { Logger } from "tslog";
 import { Noblog } from "../lib/nomd/nomd.js";
 import { GetAllPosts } from "../lib/notion/client.js";
 
-let v: boolean = false;
 let save_dir = "./content/markdown"
 let sub_dir = "sub"
 const nob = new Noblog()
@@ -35,11 +34,11 @@ async function main() {
   try {
     await Promise.all(futures);
     for (const pageid of Object.keys(nob.MdCollection)) {
-      let fpath = save_dir;
-      if (pages.find(page => page.id !== pageid))
-        fpath = sub_dir
+      let fpath = sub_dir;
+      if (pages.find(page => page.id === pageid))
+        fpath = save_dir
       const log = await nob.SaveJelly(pageid, fpath, nob.MdCollection[pageid])
-      if (v) logger.info(log);
+      logger.info(log);
     }
     console.log(`success: finish dump all files to "${save_dir}"`)
   } catch (error) {
