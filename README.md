@@ -2,11 +2,13 @@
 
 This package aims to generate static content from notion.so and provide a plugable component/theme market for you bloggers.
 
-the pattern would be like notablog, but more flexiable thanks to the mighty power of Astro
+the pattern would be like notablog (see reference), but more flexiable thanks to the mighty power of Astro
 
 # Usage 
+yet still experimental and not complete
+
 ```
-npm install @humbornjo/noblog
+npm install noblog
 npx noblog .
 ```
 
