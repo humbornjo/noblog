@@ -4,6 +4,7 @@ import { Logger } from "tslog";
 import { Noblog } from "../lib/nomd/nomd.js";
 import { GetAllPosts } from "../lib/notion/client.js";
 
+let v: boolean = false;
 let save_dir = "./content/markdown"
 let sub_dir = "sub"
 const nob = new Noblog()
@@ -34,16 +35,18 @@ async function main() {
   try {
     await Promise.all(futures);
     for (const pageid of Object.keys(nob.MdCollection)) {
-      if (pages.find(page => page.id === pageid))
-        nob.SaveJelly(pageid, save_dir, nob.MdCollection[pageid])
-      else
-        nob.SaveJelly(pageid, sub_dir, nob.MdCollection[pageid])
+      let fpath = save_dir;
+      if (pages.find(page => page.id !== pageid))
+        fpath = sub_dir
+      const log = await nob.SaveJelly(pageid, fpath, nob.MdCollection[pageid])
+      if (v) logger.info(log);
     }
+    console.log(`success: finish dump all files to "${save_dir}"`)
   } catch (error) {
     if (error instanceof Error) {
-      console.log(`Failed to dump markdown: ${error.message}`);
+      console.log(`failed: consider running with "v=true" - ${error.message}`);
     } else {
-      console.log('An unknown error occurred');
+      console.log('failed: an unknown error occurred');
     }
   }
 }

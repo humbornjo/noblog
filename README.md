@@ -4,6 +4,12 @@ This package aims to generate static content from notion.so and provide a plugab
 
 the pattern would be like notablog, but more flexiable thanks to the mighty power of Astro
 
+# Usage 
+```
+npm install @humbornjo/noblog
+npx noblog .
+```
+
 # Millstone
 * \[2024.07.08\] fuck around
 * \[2024.07.20\] generate github flavored markdown
