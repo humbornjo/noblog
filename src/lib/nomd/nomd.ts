@@ -3,7 +3,8 @@ import * as path from 'path';
 import { NotionToMarkdown } from "notion-to-md";
 
 import * as cvtmd from "./cvter.js"
-import { client as notion_client } from "../notion/client.js";
+import type { Page } from '../notion/object.js';
+import { GetPageMeta, client as notion_client } from "../notion/client.js";
 
 // from notion-to-md
 type MdBlock = {
@@ -66,6 +67,8 @@ export class Noblog extends NotionToMarkdown {
     }
     const blocks = await this.pageToMarkdown(page_id);
     const jelly = await this.FromBlocks(blocks, recursive);
+    const astro_meta = await AssembleAstroFrontmatter(await GetPageMeta(page_id))
+    jelly.content = astro_meta + jelly.content
     this.MdCollection[page_id] = jelly;
     return jelly;
   }
@@ -85,4 +88,17 @@ export class Noblog extends NotionToMarkdown {
       }
     }
   }
+}
+
+async function AssembleAstroFrontmatter(page: Page) {
+  let frontmatter = ""
+  // get title
+  frontmatter += ("const title = " + (page.properties.title?.title ?? ["\"\""])[0] + "\n")
+  // get tags
+  frontmatter += ("const tags = " + JSON.stringify(page.properties.tags?.multi_select ?? []) + "\n")
+  // get date
+  frontmatter += ("const date = " + page.properties.date?.date?.start ?? "\"\"" + "\n")
+  // get archived
+  frontmatter += ("const archived = " + page.properties.archived ? "\"true\"" : "\"false\"" + "\n")
+  return "---\n" + frontmatter + "---\n"
 }

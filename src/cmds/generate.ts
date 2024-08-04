@@ -4,8 +4,8 @@ import { Logger } from "tslog";
 import { Noblog } from "../lib/nomd/nomd.js";
 import { GetAllPosts } from "../lib/notion/client.js";
 
-let save_dir = "./content/markdown"
-let sub_dir = "sub"
+let save_dir = "./src/pages/posts/"
+let sub_dir = "nob_children"
 const nob = new Noblog()
 const logger = new Logger({ name: "noblog" });
 
@@ -43,7 +43,7 @@ async function main() {
     console.log(`success: finish dump all files to "${save_dir}"`)
   } catch (error) {
     if (error instanceof Error) {
-      console.log(`failed: consider running with "v=true" - ${error.message}`);
+      console.log(`failed: consider run verbose with v=true - ${error.message}`);
     } else {
       console.log('failed: an unknown error occurred');
     }
