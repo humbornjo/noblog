@@ -8,22 +8,30 @@ import { GetAllPosts } from './lib/notion/client.js'
 import { client } from './lib/notion/client.js'
 import type { Page } from './lib/notion/object.js'
 
-const nob = new Noblog();
+const test = async () => {
+  const nob = new Noblog();
+  let save_dir = "./src/pages/posts/"
+  let sub_dir = "nob_children"
 
-GetAllPosts().then(res => {
-  client.pages.retrieve({ page_id: res[0]?.id } as any).then(
-    res => {
-      const page = res as Page
-      console.log(page.properties.date?.date)
-    })
+  const pages = await GetAllPosts()
+  console.log(pages)
+  const futs = pages.map(page => {
+    return nob.FromPageid(page.id)
+  })
 
+  await Promise.all(futs)
+  for (const pageid of Object.keys(nob.MdCollection)) {
+    let fpath = sub_dir;
+    if (pages.find(page => page.id === pageid))
+      fpath = save_dir
+    await nob.SaveJelly(pageid + ".md", fpath, nob.MdCollection[pageid])
+  }
+  console.log(`success: finish dump all files to "${save_dir}"`)
   // nob.FromPageid(res[5]?.id as any).then(
   //   res => {
   //     console.log(nob.MdCollection)
   //   }
   // )
-})
+}
 
-const list2string = ["111", "hello", "world"]
-
-console.log(JSON.stringify(list2string))
+test()

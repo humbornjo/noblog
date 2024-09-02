@@ -67,7 +67,8 @@ export class Noblog extends NotionToMarkdown {
     }
     const blocks = await this.pageToMarkdown(page_id);
     const jelly = await this.FromBlocks(blocks, recursive);
-    const astro_meta = await AssembleAstroFrontmatter(await GetPageMeta(page_id))
+    const meta = await GetPageMeta(page_id)
+    const astro_meta = await AssembleAstroFrontmatter(meta)
     jelly.content = astro_meta + jelly.content
     this.MdCollection[page_id] = jelly;
     return jelly;
@@ -93,12 +94,12 @@ export class Noblog extends NotionToMarkdown {
 async function AssembleAstroFrontmatter(page: Page) {
   let frontmatter = ""
   // get title
-  frontmatter += ("const title = " + (page.properties.title?.title ?? ["\"\""])[0] + "\n")
+  frontmatter += "title: " + "'" + (page.properties.title?.title?.[0]?.plain_text ?? "") + "'" + "\n"
   // get tags
-  frontmatter += ("const tags = " + JSON.stringify(page.properties.tags?.multi_select ?? []) + "\n")
+  frontmatter += "tags: " + (JSON.stringify((page.properties.tags?.multi_select ?? []).map(tag => tag.name))) + "\n"
   // get date
-  frontmatter += ("const date = " + page.properties.date?.date?.start ?? "\"\"" + "\n")
+  frontmatter += "date: " + (page.properties.date?.date?.start ?? "") + "\n"
   // get archived
-  frontmatter += ("const archived = " + page.properties.archived ? "\"true\"" : "\"false\"" + "\n")
+  frontmatter += "archived: " + (page.properties.archived ? "true" : "false") + "\n"
   return "---\n" + frontmatter + "---\n"
 }

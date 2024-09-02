@@ -59,20 +59,19 @@ export async function GetAllPosts(): Promise<Page[]> {
 
 
 export async function GetPageMeta(page_id: string): Promise<Page> {
-  while (true) {
-    await retry(
-      async (bail) => {
-        try {
-          return (await client.pages.retrieve({ page_id: page_id })) as Page
-        } catch (error: unknown) {
-          if (error instanceof APIResponseError) {
-            if (error.status && error.status >= 400 && error.status < 500) {
-              bail(error)
-            }
+  const result = await retry(
+    async (bail) => {
+      try {
+        return (await client.pages.retrieve({ page_id: page_id })) as Page
+      } catch (error: unknown) {
+        if (error instanceof APIResponseError) {
+          if (error.status && error.status >= 400 && error.status < 500) {
+            bail(error)
           }
-          throw error
         }
-      }, { retries: numberOfRetry, }
-    )
-  }
+        throw error
+      }
+    }, { retries: numberOfRetry, }
+  )
+  return result
 }
