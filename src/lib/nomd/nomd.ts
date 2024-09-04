@@ -43,7 +43,7 @@ export class Noblog extends NotionToMarkdown {
       if (this.Posts.filter(post => post.id === page.child_page.title).length > 0) {
         path = "";
       }
-      return `[${page.child_page.title}](${path}${page.id})`;
+      return `[${page.child_page.title}](../${path}${page.id})`;
     })
   }
 

@@ -22,7 +22,7 @@ async function main() {
     help();
   }
 
-  const save_dir = argv[0] ?? "./src/pages/posts";
+  const save_dir = argv[0] ?? "./src/pages/posts/";
   const sub_dir = argv[1] ?? "nob_children/"
   const pages = await GetAllPosts();
   const nob = new Noblog(pages, save_dir, sub_dir)
