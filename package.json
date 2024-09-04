@@ -8,8 +8,18 @@
 	"types": "dist/index.d.ts",
 	"type": "module",
 	"bin": {
-		"noblog": "node dist/cmds/generate.js"
+		"noblog": "dist/generate.js"
 	},
+	"files": [ "dist/", "assets/" ],
+  "keywords": [ "nodejs", "notion", "blog" ],
+  "homepage": "https://github.com/humbornjo/noblog",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/humbornjo/noblog.git"
+  },
+  "engines": {
+    "node": ">=20"
+  },
 	"scripts": {
 		"dev": "tsc && node ./dist/index.js",
 		"build": "pnpm run build:module",
@@ -27,5 +37,11 @@
 		"node-fetch": "^3.3.2",
 		"notion-to-md": "^3.1.1",
 		"tslog": "^4.9.3"
+	},
+	"devDependencies": {
+		"@rollup/plugin-commonjs": "^26.0.1",
+		"@rollup/plugin-node-resolve": "^15.2.3",
+		"@rollup/plugin-typescript": "^11.1.6",
+		"tslib": "^2.7.0"
 	}
 }

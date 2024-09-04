@@ -1,53 +1,27 @@
-import * as path from "path"
-import { Logger } from "tslog";
-
 import { Noblog } from "../lib/nomd/nomd.js";
 import { GetAllPosts } from "../lib/notion/client.js";
 
-let save_dir = "./src/pages/posts/"
-let sub_dir = "nob_children"
-const nob = new Noblog()
-const logger = new Logger({ name: "noblog" });
-
 function help() {
-  const usage = "Usage: noblog <SAVE_DIR>";
-  const example = "Example:\n  noblog .";
-
-  const output = usage + "\n" + example + "\n";
+  const usage = "Usage:\n  noblog <SAVE_DIR> <SUB_DIR>";
+  const example = "Example:\n  noblog";
+  const params = "Config:\n  save_dir: dir for posts in database. (default: ./src/pages/posts)\n  sub_dir: sub pages during collection. (default: nob_children/)";
+  const output = usage + "\n" + example + "\n" + params + "\n";
   return output;
 }
 
 async function main() {
   const argv = process.argv.slice(2,);
-  if (argv.length > 1) {
+  if (argv.length > 2) {
     console.error("Error: invallid arg.");
     console.log(help());
   }
-  save_dir = argv[0] ?? save_dir;
-  sub_dir = path.join(save_dir, sub_dir)
 
+  const save_dir = argv[0] ?? "./src/pages/posts";
+  const sub_dir = argv[1] ?? "nob_children/"
   const pages = await GetAllPosts();
-  const futures = pages.map(page => {
-    return nob.FromPageid(page.id)
-  })
+  const nob = new Noblog(pages, save_dir, sub_dir)
 
-  try {
-    await Promise.all(futures);
-    for (const pageid of Object.keys(nob.MdCollection)) {
-      let fpath = sub_dir;
-      if (pages.find(page => page.id === pageid))
-        fpath = save_dir
-      const log = await nob.SaveJelly(pageid, fpath, nob.MdCollection[pageid])
-      logger.info(log);
-    }
-    console.log(`success: finish dump all files to "${save_dir}"`)
-  } catch (error) {
-    if (error instanceof Error) {
-      console.log(`failed: consider run verbose with v=true - ${error.message}`);
-    } else {
-      console.log('failed: an unknown error occurred');
-    }
-  }
+  nob.Collect(true)
 }
 
 main()

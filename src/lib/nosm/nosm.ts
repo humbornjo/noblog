@@ -1,3 +1,0 @@
-// noblog style manager
-
-
