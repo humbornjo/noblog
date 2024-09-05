@@ -6,11 +6,11 @@ export default {
   input: 'src/cmds/generate.ts',
   output: [
     {
-      file: 'dist/generate.js',
+      file: 'dist/generate.cjs',
       format: 'cjs',
       sourcemap: true
     }, {
-      file: 'dist/generate.esm.js',
+      file: 'dist/generate.js',
       format: 'es',
       sourcemap: true
     }
