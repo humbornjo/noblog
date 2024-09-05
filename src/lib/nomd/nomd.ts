@@ -140,11 +140,11 @@ export class Noblog extends NotionToMarkdown {
     // get tags
     frontmatter += "tags: " + JSON.stringify((page.properties.tags?.multi_select ?? []).map(tag => tag.name)) + "\n"
     // get date
-    frontmatter += "date: " + (page.properties.date?.date?.start ?? "") + "\n"
+    frontmatter += "pubDate: " + (page.properties.date?.date?.start ?? new Date().toISOString().split("T")[0]) + "\n"
     // get archived
     frontmatter += "archived: " + (page.properties.archived ? "true" : "false") + "\n"
     // get description
-    frontmatter += "desc: " + JSON.stringify(page.properties.description?.rich_text?.[0]?.plain_text ?? "") + "\n"
+    frontmatter += "description: " + JSON.stringify(page.properties.description?.rich_text?.[0]?.plain_text ?? "") + "\n"
     return "---\n" + frontmatter + "---\n"
   }
 }

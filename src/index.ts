@@ -10,11 +10,6 @@ const test = async () => {
   const pages = await GetAllPosts()
   const nob = new Noblog(pages);
   nob.Collect()
-  // nob.FromPageid(res[5]?.id as any).then(
-  //   res => {
-  //     console.log(nob.MdCollection)
-  //   }
-  // )
 }
 
 test()
