@@ -12,7 +12,15 @@ noblog
 ```
 
 1. Duplicate this [database](https://www.notion.so/humbornjo/fa0faae85c504934a4a86cfa70302850?v=2abd1079ae134fbd8df2604765baa1df) and write blogs on it.
+
 2. Find a astro template, here is a shabby template I made: [nobloger](https://github.com/humbornjo/nobloger)
+
+3. set two env variables:
+    ```
+    NOBLOG_DATABASE_ID: your notion database id.
+    NOTION_API_SECRET: your notion api secret.
+    ```
+
 3. Run `noblog` and deploy your site.
 
 By default, `noblog` saves all your post (the posts at the surface og your database) under `SAVE_PATH`. 
@@ -51,9 +59,9 @@ At this time, all the generated markdown is with Astro style, which means each f
 layout: ../../layouts/MarkdownPostLayout.astro
 title: "golang blog"
 tags: ["lang", "go"]
-date: 2024-01-24
+pubDate: 2024-01-24
 archived: false
-desc: "sometimes I hate, sometimes I love. <3"
+description: "sometimes I hate, sometimes I love. <3"
 ---
 ```
 

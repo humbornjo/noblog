@@ -21,6 +21,7 @@ export type MdJelly = {
 
 export class Noblog extends NotionToMarkdown {
   Posts: Page[] = [];
+  CurrPage: string = "";
   SavePath: string = "./src/pages/posts/";
   ChildPath: string = "nob_children/";
   MdCollection: Record<string, MdJelly> = {};
@@ -37,24 +38,44 @@ export class Noblog extends NotionToMarkdown {
     }
 
     this.setCustomTransformer("child_page", async (block) => {
-      let path = this.ChildPath;
       const page = block as any;
       if (!page?.id) { return false; }
-      if (this.Posts.filter(post => post.id === page.child_page.title).length > 0) {
-        path = "";
+
+      let sub_path
+
+      // if (curr_page.id in this.Post) and (page.id in this.Post)
+      // if (curr_page.id not in this.Post) and (page.id not in this.Post)
+      //    * path should be "../pageid"
+      // if (curr_page.id in this.Post) and (page.id not in this.Post)
+      //    * path should be "../save_path/pageid"
+      // if (curr_page.id not in this.Post) and (page.id in this.Post)
+      //    * path should be "../../pageid"
+
+      const parent_surface = (this.Posts.filter(post => post.id === this.CurrPage).length > 0)
+      const child_surface = (this.Posts.filter(post => post.id === page.id).length > 0)
+
+      if (parent_surface === child_surface) {
+        sub_path = ""
+      } else if (parent_surface) {
+        sub_path = this.ChildPath
+      } else {
+        sub_path = ".."
       }
-      return `[${page.child_page.title}](../${path}${page.id})`;
+
+      const full_path = path.join("../", sub_path, page.id)
+
+      return `＆[${page.child_page.title}](${full_path})`;
     })
   }
 
   async Collect(recur: boolean = true) {
     const save_dir = this.SavePath
     const sub_dir = path.join(save_dir, this.ChildPath)
-    const futs = this.Posts.map(page => {
-      return this.FromPageid(page.id, recur)
-    })
+    for (let page of this.Posts) {
+      await this.FromPageid(page.id, recur)
+    }
+
     try {
-      await Promise.all(futs)
       for (const pageid of Object.keys(this.MdCollection)) {
         let fpath = sub_dir;
         if (this.Posts.find(page => page.id === pageid))
@@ -102,15 +123,22 @@ export class Noblog extends NotionToMarkdown {
   }
 
   async FromPageid(page_id: string, recursive: boolean = true) {
+    // preserve the curr page info
+    const prev_page = this.CurrPage;
+    this.CurrPage = page_id;
+
     if (this.MdCollection.hasOwnProperty(page_id)) {
       return this.MdCollection[page_id];
     }
     const blocks = await this.pageToMarkdown(page_id);
     const jelly = await this.FromBlocks(blocks, recursive);
-    const meta = await GetPageMeta(page_id)
-    const astro_meta = await this.AssembleAstroFrontmatter(meta)
-    jelly.content = astro_meta + jelly.content
+    const meta = await GetPageMeta(page_id);
+    const astro_meta = await this.AssembleAstroFrontmatter(meta);
+    jelly.content = astro_meta + jelly.content;
     this.MdCollection[page_id] = jelly;
+
+    // restore the prev page info 
+    this.CurrPage = prev_page;
     return jelly;
   }
 
