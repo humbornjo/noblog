@@ -67,3 +67,6 @@ package-lock.json
 .eslintcache
 *v8.log
 /lib/
+
+# noblog ignore
+pages/

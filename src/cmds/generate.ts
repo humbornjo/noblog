@@ -12,22 +12,22 @@ Example:
   noblog src/pages/posts/ nob_children/
 
 Available <option>:
-  -v  Print more messages for debugging.\n`)
+  -v  Print more messages for debugging.\n`);
 }
 
 async function main() {
-  const argv = process.argv.slice(2,);
+  const argv = process.argv.slice(2);
   if (argv.length > 2) {
     console.error("Error: invallid arg.");
     help();
   }
 
   const save_dir = argv[0] ?? "./src/pages/posts/";
-  const sub_dir = argv[1] ?? "nob_children/"
+  const sub_dir = argv[1] ?? "nob_children/";
   const pages = await GetAllPosts();
-  const nob = new Noblog(pages, save_dir, sub_dir)
+  const nob = new Noblog(pages, save_dir, sub_dir);
 
-  nob.Collect(true)
+  nob.Collect(true);
 }
 
-main()
+main();

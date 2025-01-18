@@ -1,77 +1,137 @@
-import 'dotenv/config'
+import "dotenv/config";
+import retry from "async-retry";
+import { Client, APIResponseError } from "@notionhq/client";
 
-import retry from 'async-retry'
-import { Client, APIResponseError } from '@notionhq/client'
-import type { Page, QueryDatabaseResponse } from './object.js'
-import type * as request from './request.ts'
+import type * as request from "./request.ts";
+import type { Page, QueryDatabaseResponse } from "./object.js";
+import type { ListBlockChildrenResponse } from "@notionhq/client/build/src/api-endpoints.js";
 
-const NOTION_API_SECRET = process.env.NOTION_API_SECRET ?? ''
-const NOBLOG_DATABASE_ID = process.env.NOBLOG_DATABASE_ID ?? ''
+const NOTION_API_SECRET = process.env.NOTION_API_SECRET ?? "";
+const NOBLOG_DATABASE_ID = process.env.NOBLOG_DATABASE_ID ?? "";
 
 export const client = new Client({
   auth: NOTION_API_SECRET,
-})
+});
 
-const numberOfRetry = 2
+const numberOfRetry = 2;
 
 export async function GetAllPosts(): Promise<Page[]> {
   const params: request.QueryDatabase = {
     database_id: NOBLOG_DATABASE_ID,
     filter: {
-      and: [{
-        property: 'publish',
-        checkbox: { equals: true, },
-      }]
+      and: [
+        {
+          property: "publish",
+          checkbox: { equals: true },
+        },
+      ],
     },
-    sorts: [{
-      property: 'date',
-      direction: 'descending',
-    }],
+    sorts: [
+      {
+        property: "date",
+        direction: "descending",
+      },
+    ],
     page_size: 100,
-  }
+  };
 
-  let results: Page[] = []
+  let results: Page[] = [];
   while (true) {
     const res = await retry(
       async (bail) => {
         try {
           return (await client.databases.query(
-            params as any
-          )) as QueryDatabaseResponse
+            params as any,
+          )) as QueryDatabaseResponse;
         } catch (error: unknown) {
           if (error instanceof APIResponseError) {
             if (error.status && error.status >= 400 && error.status < 500) {
-              bail(error)
+              bail(error);
             }
           }
-          throw error
+          throw error;
         }
-      }, { retries: numberOfRetry, }
-    )
+      },
+      { retries: numberOfRetry },
+    );
 
-    results = results.concat(res.results)
-    if (!res.has_more) { break }
-    params['start_cursor'] = res.next_cursor as string
+    results = results.concat(res.results);
+    if (!res.has_more) {
+      break;
+    }
+    params["start_cursor"] = res.next_cursor as string;
   }
 
-  return results
+  return results;
 }
-
 
 export async function GetPageMeta(page_id: string): Promise<Page> {
   const result = await retry(
     async (bail) => {
       try {
-        return (await client.pages.retrieve({ page_id: page_id })) as Page
+        return (await client.pages.retrieve({ page_id: page_id })) as Page;
       } catch (error: unknown) {
         if (error instanceof APIResponseError) {
           if (error.status && error.status >= 400 && error.status < 500) {
-            bail(error)
+            bail(error);
           }
         }
-        throw error
+        throw error;
       }
-    }, { retries: numberOfRetry, }
-  )
-  return result
+    },
+    { retries: numberOfRetry },
+  );
+  return result;
+}
+
+export async function GetBlockChildren(
+  block_id: string,
+  totalPage: number | null | undefined,
+) {
+  const result: ListBlockChildrenResponseResults = [];
+  let pageCount = 0;
+  let start_cursor = undefined;
+
+  do {
+    const response = (await client.blocks.children.list({
+      start_cursor: start_cursor,
+      block_id: block_id,
+    })) as ListBlockChildrenResponse;
+    result.push(...response.results);
+
+    start_cursor = response?.next_cursor;
+    pageCount += 1;
+  } while (
+    start_cursor != null &&
+    (totalPage == null || pageCount < totalPage)
+  );
+
+  ModifyNumberedListObject(result);
+  return result;
+}
+
+// https://github.com/souvikinator/notion-to-md
+export type BlockAttributes = {
+  numbered_list_item?: {
+    number?: number;
+  };
+};
+
+export type ListBlockChildrenResponseResult =
+  ListBlockChildrenResponseResults[0] & BlockAttributes;
+
+export type ListBlockChildrenResponseResults =
+  ListBlockChildrenResponse["results"] & BlockAttributes;
+
+function ModifyNumberedListObject(blocks: ListBlockChildrenResponseResults) {
+  let numberedListIndex = 0;
+  for (const block of blocks) {
+    if ("type" in block && block.type === "numbered_list_item") {
+      // add numbers
+      // @ts-ignore
+      block.numbered_list_item.number = ++numberedListIndex;
+    } else {
+      numberedListIndex = 0;
+    }
+  }
 }

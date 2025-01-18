@@ -1,6 +1,37 @@
 import fetch from "node-fetch";
 import { markdownTable } from "markdown-table";
 
+const suffixInlineCode = "`";
+const prefixInlineCode = "`";
+
+const suffixBold = "**";
+const prefixBold = "**";
+
+const suffixItalic = "_";
+const prefixItalic = "_";
+
+const suffixStrikethrough = "~~";
+const prefixStrikethrough = "~~";
+
+const suffixUnderline = "<u>";
+const prefixUnderline = "</u>";
+
+export function GetPrefixSuffix(type: string): [string, string] {
+  switch (type) {
+    case "code":
+      return [prefixInlineCode, suffixInlineCode];
+    case "bold":
+      return [prefixBold, suffixBold];
+    case "italic":
+      return [prefixItalic, suffixItalic];
+    case "strikethrough":
+      return [prefixStrikethrough, suffixStrikethrough];
+    case "underline":
+      return [prefixUnderline, suffixUnderline];
+    default:
+      return ["", ""];
+  }
+}
 
 type CalloutIcon =
   | { type: "emoji"; emoji?: string }
@@ -78,7 +109,7 @@ export const callout = (text: string, icon?: CalloutIcon) => {
 };
 
 export const bullet = (text: string, count?: number) => {
-  let renderText = text.trim();
+  const renderText = text.trim();
   return count ? `${count}. ${renderText}` : `- ${renderText}`;
 };
 
@@ -89,7 +120,7 @@ export const todo = (text: string, checked: boolean) => {
 export const image = async (
   alt: string,
   href: string,
-  convertToBase64: boolean = false
+  convertToBase64: boolean = false,
 ): Promise<string> => {
   // In case the user does not want to convert the images to Base64
   // or the image is already base64
