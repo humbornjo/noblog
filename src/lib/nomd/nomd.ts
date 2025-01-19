@@ -52,8 +52,6 @@ export class Noblog {
         return false;
       }
 
-      let sub_path;
-
       // if (curr_page.id in this.Post) and (page.id in this.Post) ||
       //    (curr_page.id not in this.Post) and (page.id not in this.Post)
       //    * path should be "../pageid"
@@ -61,6 +59,7 @@ export class Noblog {
       //    * path should be "../save_path/pageid"
       // if (curr_page.id not in this.Post) and (page.id in this.Post)
       //    * path should be "../../pageid"
+      let sub_path;
       const parent_surface =
         this.Posts.filter((post) => post.id === this.CurrPage).length > 0;
       const child_surface =
@@ -75,8 +74,7 @@ export class Noblog {
       }
 
       const full_path = path.join("../", sub_path, page.id);
-
-      return `＆[${page.child_page.title}](${full_path})`;
+      return `(」ﾟﾛﾟ)｣ [${page.child_page.title}](${full_path})`;
     };
   }
 
@@ -181,6 +179,7 @@ export class Noblog {
       );
     }
 
+    if (!mdBlocks) mdBlocks = [];
     if (!blocks) return mdBlocks;
 
     for (let i = 0; i < blocks.length; i++) {
@@ -196,11 +195,19 @@ export class Noblog {
       if ("has_children" in block && block.has_children) {
         const block_id =
           block.type == "synced_block" &&
-            block.synced_block?.synced_from?.block_id
+          block.synced_block?.synced_from?.block_id
             ? block.synced_block.synced_from.block_id
             : block.id;
         // Get children of this block.
         const child_blocks = await GetBlockChildren(block_id, totalPage);
+
+        // Push this block to mdBlocks.
+        mdBlocks.push({
+          type: block.type,
+          blockId: block.id,
+          parent: await this.BlockToMarkdown(block),
+          children: [],
+        });
 
         // Recursively call BlocksToMarkdown to get children of this block.
         // check for custom transformer before parsing child
@@ -217,14 +224,6 @@ export class Noblog {
             );
           }
         }
-
-        // Push this block to mdBlocks.
-        mdBlocks.push({
-          type: block.type,
-          blockId: block.id,
-          parent: await this.BlockToMarkdown(block),
-          children: [],
-        });
 
         continue;
       }
@@ -249,7 +248,7 @@ export class Noblog {
     const { type } = block;
     if (type in this.CustomTransformers && !!this.CustomTransformers[type]) {
       const transformer = this.CustomTransformers[type]!;
-      const customTransformerValue = transformer(block);
+      const customTransformerValue = await transformer(block);
       if (typeof customTransformerValue === "string")
         return customTransformerValue;
     }
