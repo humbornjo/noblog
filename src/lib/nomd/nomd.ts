@@ -34,16 +34,20 @@ export class Noblog {
   CurrPage: string = "";
   SavePath: string = "./src/pages/posts/";
   ChildPath: string = "nob_children/";
+  LayoutPath: string = "../../layouts/MarkdownPostLayout.astro";
   MdCollection: Record<string, MdJelly> = {};
   CustomTransformers: Record<string, CustomTransformer> = {};
 
-  constructor(posts: Page[], save_path?: string, child_path?: string) {
+  constructor(posts: Page[], save_path?: string, child_path?: string, layout_path?: string) {
     this.Posts = posts;
     if (child_path != undefined) {
       this.ChildPath = child_path;
     }
     if (save_path != undefined) {
       this.SavePath = save_path;
+    }
+    if (layout_path != undefined) {
+      this.LayoutPath = layout_path;
     }
 
     this.CustomTransformers["child_page"] = async (block) => {
@@ -539,7 +543,7 @@ export class Noblog {
     const ischild =
       this.Posts.filter((post) => post.id === page.id).length > 0 ? "" : "../";
     frontmatter +=
-      "layout: " + ischild + "../../layouts/MarkdownPostLayout.astro" + "\n";
+      "layout: " + ischild + this.LayoutPath + "\n";
     // get title
     frontmatter +=
       "title: " +
