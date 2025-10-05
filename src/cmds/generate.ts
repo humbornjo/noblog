@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-import { Noblog } from "../lib/nomd/nomd.js";
-import { GetAllPosts } from "../lib/notion/client.js";
+import { Noblog } from "../lib/noblog/noblog.js";
+import { ListPages } from "../lib/notion/client.js";
 import { readFileSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
@@ -78,14 +78,14 @@ function parseArgs(argv: string[]): CliOptions {
     version: false,
     savePath: "./src/pages/posts/",
     subPath: "nob_children/",
-    layoutPath: "../../layouts/MarkdownPostLayout.astro"
+    layoutPath: "../../layouts/MarkdownPostLayout.astro",
   };
 
   const positionalArgs: string[] = [];
 
   for (let i = 0; i < argv.length; i++) {
-    const arg = argv[i];
-    
+    const arg = argv[i]!;
+
     switch (arg) {
       case "-v":
       case "--verbose":
@@ -101,8 +101,8 @@ function parseArgs(argv: string[]): CliOptions {
         options.version = true;
         break;
       case "--layout":
-        if (i + 1 < argv.length && !argv[i + 1].startsWith("-")) {
-          options.layoutPath = argv[++i];
+        if (i + 1 < argv.length && !argv[i + 1]!.startsWith("-")) {
+          options.layoutPath = argv[++i]!;
         } else {
           console.error("Error: --layout requires a path argument");
           help();
@@ -125,10 +125,10 @@ function parseArgs(argv: string[]): CliOptions {
 
   // Handle positional arguments
   if (positionalArgs.length > 0) {
-    options.savePath = positionalArgs[0];
+    options.savePath = positionalArgs[0]!;
   }
   if (positionalArgs.length > 1) {
-    options.subPath = positionalArgs[1];
+    options.subPath = positionalArgs[1]!;
   }
   if (positionalArgs.length > 2) {
     console.error("Error: Too many arguments.");
@@ -145,8 +145,8 @@ async function generateBlog(options: CliOptions) {
       console.log("Fetching posts from Notion...");
     }
 
-    const pages = await GetAllPosts();
-    
+    const pages = await ListPages();
+
     if (options.verbose) {
       console.log(`Found ${pages.length} pages`);
       console.log(`Save path: ${options.savePath}`);
@@ -154,9 +154,14 @@ async function generateBlog(options: CliOptions) {
       console.log(`Layout path: ${options.layoutPath}`);
     }
 
-    const nob = new Noblog(pages, options.savePath, options.subPath, options.layoutPath);
+    const nob = new Noblog(
+      pages,
+      options.savePath,
+      options.subPath,
+      options.layoutPath,
+    );
     await nob.Collect(true);
-    
+
     console.log(`✅ Successfully generated blog content`);
   } catch (error) {
     console.error(`❌ Error generating blog content:`);
@@ -174,16 +179,16 @@ async function generateBlog(options: CliOptions) {
 
 async function main() {
   const argv = process.argv.slice(2);
-  
+
   if (argv.length === 0) {
     // Default behavior: generate with default options
-    await generateBlog({ 
-      verbose: false, 
-      help: false, 
-      version: false, 
-      savePath: "./src/pages/posts/", 
+    await generateBlog({
+      verbose: false,
+      help: false,
+      version: false,
+      savePath: "./src/pages/posts/",
       subPath: "nob_children/",
-      layoutPath: "../../layouts/MarkdownPostLayout.astro"
+      layoutPath: "../../layouts/MarkdownPostLayout.astro",
     });
     return;
   }

@@ -1,0 +1,237 @@
+[
+  {
+    type: "equation",
+    blockId: "26af16f8-9950-809d-a3a7-f02509664f18",
+    parent: "$$\nO(m\\ log^{2/3}n)\n$$",
+    children: [],
+  }, {
+    type: "heading_1",
+    blockId: "26af16f8-9950-80e2-b2b2-c9a535700cf2",
+    parent: "# Preliminaries",
+    children: [],
+  }, {
+    type: "bulleted_list_item",
+    blockId: "26af16f8-9950-80b2-9fb6-cf17ef8f354d",
+    parent: "- Directed Graph $G=(V,\\ E)$ with non-negative weight function: $E \\to \\mathbb{R}_{\\geq0}$",
+    children: [],
+  }, {
+    type: "bulleted_list_item",
+    blockId: "26af16f8-9950-8035-9eac-e6b4e6f47ecb",
+    parent: "- $w_{uv}$ denotes each edge $(u,\\ v)\\in E$",
+    children: [],
+  }, {
+    type: "bulleted_list_item",
+    blockId: "26af16f8-9950-80dc-9210-cf8d2edf7a0b",
+    parent: "- $n=|V|,\\ m=|E|$ as the number of vertices and edges in graph",
+    children: [],
+  }, {
+    type: "bulleted_list_item",
+    blockId: "26af16f8-9950-802b-8fbe-ebbb18abaae7",
+    parent: "- Source vertex in the graph is denoted by $s$",
+    children: [],
+  }, {
+    type: "bulleted_list_item",
+    blockId: "26af16f8-9950-8033-b571-ee957f43332e",
+    parent: "- Shortest path from $s$ to every vertex $v\\in V$, denoted by $d(v)$",
+    children: [],
+  }, {
+    type: "bulleted_list_item",
+    blockId: "26af16f8-9950-80bc-93c6-e97eb999b0c9",
+    parent: "- assume every vertex in $G$ is reachable, thus $m\\geq n-1$",
+    children: [],
+  }, {
+    type: "heading_2",
+    blockId: "26af16f8-9950-801b-9509-ee02ce96bb56",
+    parent: "## Constant-Degree Graph.",
+    children: [],
+  }, {
+    type: "paragraph",
+    blockId: "26af16f8-9950-8010-ab4e-e76fc005b20e",
+    parent: "For any given graph $G$ we may construct $G'$ by a classical transformation to construct ",
+    children: [],
+  }, {
+    type: "paragraph",
+    blockId: "26af16f8-9950-8077-a836-ccebf94ea938",
+    parent: "constant in-degrees and out-degrees graph.",
+    children: [],
+  }, {
+    type: "bulleted_list_item",
+    blockId: "26af16f8-9950-8006-9e67-ead237f31860",
+    parent: "- Substitute each vertex $v$ with a cycle of vertices strongly connected with zero-weight edges. For every incoming or outgoing neighbor $w$ of $v$, there is a vertex $x_{vw}$ on this cycle",
+    children: [],
+  }, {
+    type: "bulleted_list_item",
+    blockId: "26af16f8-9950-80d2-b41c-e36dba09db3c",
+    parent: "- For every edge $(u,\\ v)$ in $G$, add a directed edge from vertex $x_{uv}$ to $x_{vu}$ with weight $w_{uv}$",
+    children: [],
+  }, {
+    type: "paragraph",
+    blockId: "26af16f8-9950-800f-aa7a-d4d76bad8b2a",
+    parent: "It’s clear that the shortest path is preserved by the transformation. Each vertex in $G'$ has in-degree and out-degree at most 2.",
+    children: [],
+  }, {
+    type: "heading_2",
+    blockId: "26af16f8-9950-80ab-a511-ed03d08ab42a",
+    parent: "## Comparison-Addition Model.",
+    children: [],
+  }, {
+    type: "paragraph",
+    blockId: "26af16f8-9950-80e6-9e39-f48f0edc1059",
+    parent: "each addition and comparison takes unit time, and no other computations on edge weights are allowed",
+    children: [],
+  }, {
+    type: "heading_2",
+    blockId: "26af16f8-9950-804b-ae0a-f5f6d6c2f622",
+    parent: "## Labels Used in the Algorithm.",
+    children: [],
+  }, {
+    type: "paragraph",
+    blockId: "26af16f8-9950-800b-81e9-d5c3226f3421",
+    parent: "maintains a global variable $\\hat{d[u]}$ as a sound estimation of $d[u]$ (that is, $\\hat{d[u]} \\geq d(u)$ ",
+    children: [],
+  }, {
+    type: "bulleted_list_item",
+    blockId: "26af16f8-9950-800c-856b-c548138773d7",
+    parent: "- Initialize $\\hat{d[s]} =0$ and  $\\hat{d[v]} =\\infty$ for any other $v\\in V$",
+    children: [],
+  }, {
+    type: "bulleted_list_item",
+    blockId: "26af16f8-9950-8019-a94d-f39e428d9ee5",
+    parent: "- Update $\\hat{d[v]}$ in a non-increasing manner by relaxing an edge $(u,\\ v)\\in E$ toughout the algorithm. That is, assign $\\hat{d[v]} \\leftarrow\\hat{d[u]} +w_{uv}$ when $\\hat{d[u]} +w_{uv}$ is no greater than the old value of $\\hat{d[v]}$",
+    children: [],
+  }, {
+    type: "bulleted_list_item",
+    blockId: "26af16f8-9950-8068-9f56-f9104a9106a7",
+    parent: "- If $\\hat{d[x]}=d(x)$, we say $x$ is complete; otherwise, we say $x$ is incomplete. If all vertices in a set $S$ are complete, we say $S$ is complete",
+    children: [],
+  }, {
+    type: "bulleted_list_item",
+    blockId: "26af16f8-9950-8055-99a5-ec75c369735a",
+    parent: "- Maintain a shortest path tree according to current $\\hat{d[\\cdot]}$ by recording the predecessor $Pred[v]$ of each vertex $v$. When relaxing an edge $(u,\\ v)$, set $Pred[v]\\leftarrow u$",
+    children: [],
+  }, {
+    type: "callout",
+    blockId: "26af16f8-9950-808a-92bb-e353f8ff85c2",
+    parent: "> 💡 The predecessor, $Pred[v]$ simply records how the algorithm found the current best path to $v$. Which is the vertex that comes immediately before $v$ on the current shortest path from the source $s$.",
+    children: [],
+  }, {
+    type: "heading_2",
+    blockId: "26af16f8-9950-808e-a57a-ef5df5e9d106",
+    parent: "## Total order of Paths.",
+    children: [],
+  }, {
+    type: "paragraph",
+    blockId: "26af16f8-9950-80fb-ab97-c99a97589e4f",
+    parent: " make the following assumption",
+    children: [],
+  }, {
+    type: "heading_3",
+    blockId: "26af16f8-9950-80c2-bd2e-f26c40cc7bed",
+    parent: "### Assumption 2.1. All paths we obtain in this algorithm have different lengths.",
+    children: [],
+  }, {
+    type: "paragraph",
+    blockId: "26af16f8-9950-80bf-9fa3-ca7228a9e3b7",
+    parent: "This assumption is required for two purposes:",
+    children: [],
+  }, {
+    type: "bulleted_list_item",
+    blockId: "26af16f8-9950-80ae-99aa-ef7fda73c8fa",
+    parent: "- To ensure that $Pred[v]$ for all vertices $v\\in V$ keep a tree structure throughout the algorithm",
+    children: [],
+  }, {
+    type: "bulleted_list_item",
+    blockId: "26af16f8-9950-8049-a803-e58245073266",
+    parent: "- To provide a relative order of vertices with the same value of $\\hat{d[]}$",
+    children: [],
+  }, {
+    type: "callout",
+    blockId: "26af16f8-9950-8052-a226-e196e48519fc",
+    parent: "> 💡 How comes tree structure can not be kept if path length could be the same?  \n> Keeping the tree structure means there could be only one possible value for $Pred[v]$ (one parent only). If $Pred[v]$ has two parents $x_1$ and $x_2$, it indicates that, $\\hat{d[x_1]} +w_{x_1v} = \\hat{d[x_2]} +w_{x_2v}$. Which is just what the assumption try to avoid.",
+    children: [
+      [Object ...]
+    ],
+  }, {
+    type: "callout",
+    blockId: "26af16f8-9950-8028-b2d3-da50f9469c80",
+    parent: "> 💡 How the order is preserved when $\\hat{d[]}$ could have the same value?  \n> Say, a path of length $l$ traverses $\\alpha$ vertices $v_1=s,\\ v_2,\\ ...,\\ v_\\alpha$ as a tuple $\\langle l,\\ \\alpha,\\ v_\\alpha,\\ v_{\\alpha-1},...,\\ v_1\\rangle$. Sort path in the lexicographical order of the tuple in principle.   \n>   \n> That is, first compare the length $l$. When we have a tie, compare $\\alpha$. If there is still a tie, compare the sequence of vertices from $v_\\alpha$ to $v_1$.   \n>   \n> Comparison between the tuples can be done in only $O(1)$ time with extra information of $Pred[]$ and $\\alpha$ stored for each $\\hat{d[v]}$:  \n>   \n> - Relaxing an edge $(u,\\ v)$: If $u\\neq Pred[v]$, even if there is a tie in $l$ and $\\alpha$, it suffices to compare between $u$ and $Pred[v]$, and if $u=Pred[v]$, then $\\hat{d[u]}$ is updated to currently “shortest” and $\\hat{d[v]}$ needs to get updated  \n>   \n> - Comparing two different $\\hat{d[u]}$ and $\\hat{d[v]}$ for $u\\neq v$: Even if there is a tie in $l$ and $\\alpha$, it suffices to compare the endpoints $u$ and $v$ only",
+    children: [
+      [Object ...], [Object ...], [Object ...], [Object ...], [Object ...]
+    ],
+  }, {
+    type: "paragraph",
+    blockId: "26af16f8-9950-8068-8b88-f1e167833c8a",
+    parent: "Therefore, in the following sections, we may assume that each path started from $s$ has a unique length.",
+    children: [],
+  }, {
+    type: "heading_1",
+    blockId: "26af16f8-9950-8045-a439-e9ec86378343",
+    parent: "# The Algorithm",
+    children: [],
+  }, {
+    type: "paragraph",
+    blockId: "26ff16f8-9950-8048-a872-f602c1dfd036",
+    parent: "Main idea is based on divide-and-conquer on vertex sets.",
+    children: [],
+  }, {
+    type: "paragraph",
+    blockId: "26af16f8-9950-80a1-af12-d47c4e9716c7",
+    parent: "Let $k:=\\lfloor log^{1/3}(n)\\rfloor$ and $t:=\\lfloor log^{2/3}(n)\\rfloor$, partition a vertex set $U$ into $2^t$ pieces $U = U_1\\cup U_2 \\cup ...\\cup U_{2^t}$ of similar sizes, where vertices in earlier pieces have smaller distances, and then recursively partition each $U_i$. In this way, the size of the sub-problem shrinks to a single vertex after roughly $(log\\ n)/t$ recursion levels. ",
+    children: [],
+  }, {
+    type: "paragraph",
+    blockId: "26ff16f8-9950-8010-9cbb-c047f3c16e2f",
+    parent: "To construct our structure dynamically, each time we would try to compute the distances to a set of closest vertices (without necessarily recovering a complete ordering between their true distances), and report a boundary indicating how much progress we actually make.",
+    children: [],
+  }, {
+    type: "paragraph",
+    blockId: "26ff16f8-9950-803c-9eba-e1427e40b978",
+    parent: "Suppose at some stage of the algorithm, for every $u$ with $d(u)<b$, $u$ is complete and we have relaxed all the edges from $u$. We want to find the true distances to vertices $v$ with $d(v)\\geq b$. To avoid the $\\Theta(\\log\\ n)$ time per vertex in a priority queue, consider the “frontier” $S$ containing all current vertices $v$ with $b\\leq \\hat{d[v]} <B$ for some bound $B$ (without sorting them).",
+    children: [],
+  }, {
+    type: "paragraph",
+    blockId: "26ff16f8-9950-80bf-b3c6-eae518f15251",
+    parent: "The shortest path to every incomplete vertex $v'$ with $b\\leq d(v') <B$ must visit some complete vertex in $S$. Thus to compute the true distance to every $v'$ with $b\\leq d(v') <B$, it suffices to find the shortest paths from vertices in $S$ and bounded by $B$. This subproblem is called bounded multi-source shortest path (BMSSP).",
+    children: [],
+  }, {
+    type: "callout",
+    blockId: "26ff16f8-9950-80e3-8eb3-c2738fa46263",
+    parent: "> 💡 Here the “must visit some complete vertex in $S$” just mean it has to check the complete vertex in $S$. Since $u$ have relaxed all the edges, say $v'$ not visit any complete vertex in $S$, and there exists a incomplete vertex $v_a$ that $v'$ would visit to construct the shortest path. Since $v_a$ is incomplete, if there is no complete $v'$ in the path to construct, $v_a$ would have to adjacently visit some incomplete vertex $v_b$ … So on and so forth, indefinite loop it becomes. Which is contradictory to the fact that $S$ has a limited cardinality.",
+    children: [],
+  }, {
+    type: "heading_2",
+    blockId: "26ff16f8-9950-8004-9f05-e6ff430af18b",
+    parent: "## Lemma 3.1 (Bounded Multi-Source Shortest Path).",
+    children: [],
+  }, {
+    type: "paragraph",
+    blockId: "278f16f8-9950-809d-9feb-ed27f282809c",
+    parent: "We are given an integer level $l\\in [0,\\lceil log(n)/t\\rceil] $ , a set of vertices $S$ of $size\\leq 2^{lt}$, and an upper bound $B > max_{x\\in S}\\hat{d[x]}$. Suppose that every incomplete vertex $v$ with $d(v)< B$, the shortest path to $v$ visits some complete vertex $u\\in S$.",
+    children: [],
+  }, {
+    type: "paragraph",
+    blockId: "278f16f8-9950-8049-8f64-e2df96562fb7",
+    parent: "Then we have an sub-routine $BMSSP(l, B, S)$ in $O((kl + tl/k + t)|U |)$ time that outputs a new boundary $B' \\leq B $ and a vertex set $U$ that contains every vertex $v$ with $d(v)< B'$ and the shortest path to $v$ visits some vertex of $S$. At the end of the sub-routine, $U$ is complete. Moreover, one of the following is true:",
+    children: [],
+  }, {
+    type: "bulleted_list_item",
+    blockId: "278f16f8-9950-806c-88a0-db213e895ea9",
+    parent: "- Successful execution $B' = B$",
+    children: [],
+  }, {
+    type: "bulleted_list_item",
+    blockId: "278f16f8-9950-80f3-ac6d-d3fafcd4ebfd",
+    parent: "- Partial execution due to large workload $B'<B$, and $|U| = \\Theta(k2^{lt})$",
+    children: [],
+  }, {
+    type: "bulleted_list_item",
+    blockId: "279f16f8-9950-809c-b475-feea2b0fe3dd",
+    parent: "- ",
+    children: [],
+  }, {
+    type: "paragraph",
+    blockId: "278f16f8-9950-8002-9082-c16c0f319d37",
+    parent: "",
+    children: [],
+  }
+]

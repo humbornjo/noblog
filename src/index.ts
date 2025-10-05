@@ -17,14 +17,12 @@
 import "dotenv/config";
 
 // Re-export main modules for external usage
-export * from "./lib/nomd/nomd.js";
+export * from "./lib/noblog/noblog.js";
 export * from "./lib/notion/client.js";
 
 // Import core dependencies
-import { Noblog } from "./lib/nomd/nomd.js";
-import { GetAllPosts } from "./lib/notion/client.js";
-import { Client } from "@notionhq/client";
-import { NotionToMarkdown } from "notion-to-md";
+import { Noblog } from "./lib/noblog/noblog.js";
+import { ListPages } from "./lib/notion/client.js";
 
 /**
  * Test Function: Noblog Integration
@@ -48,8 +46,7 @@ const testNoblogIntegration = async () => {
 
   try {
     console.log("📡 Fetching posts from Notion database...");
-    const pages = await GetAllPosts();
-    console.log(`✅ Found ${pages.length} published posts`);
+    const pages = await ListPages();
 
     console.log("📝 Creating Noblog instance with default settings...");
     const noblog = new Noblog(pages);
@@ -61,58 +58,6 @@ const testNoblogIntegration = async () => {
     console.log("📁 Check ./src/pages/posts/ for generated files");
   } catch (error) {
     console.error("❌ Noblog integration test failed:");
-    if (error instanceof Error) {
-      console.error(`   Error: ${error.message}`);
-      console.error(`   Stack: ${error.stack}`);
-    } else {
-      console.error("   Unknown error occurred");
-    }
-    process.exit(1);
-  }
-};
-
-/**
- * Test Function: Notion-to-Markdown Direct Test
- *
- * Tests the raw notion-to-md functionality:
- * 1. Creates Notion client with API secret
- * 2. Initializes NotionToMarkdown converter
- * 3. Converts a specific page to markdown
- * 4. Outputs raw markdown for inspection
- *
- * This is useful for:
- * - Testing notion-to-md behavior directly
- * - Debugging markdown conversion issues
- * - Comparing raw vs noblog-processed output
- *
- * Note: Uses a hardcoded page ID for testing
- */
-const testNotionToMarkdown = async () => {
-  console.log("🧪 Testing Notion-to-Markdown Direct Conversion...");
-  console.log("===============================================");
-
-  try {
-    console.log("🔑 Creating Notion client...");
-    const notion = new Client({
-      auth: process.env.NOTION_API_SECRET ?? "",
-    });
-
-    console.log("🔄 Initializing NotionToMarkdown converter...");
-    const n2m = new NotionToMarkdown({ notionClient: notion });
-
-    // Hardcoded test page ID - this should be replaced with a valid page ID from your Notion
-    const testPageId = "10cf16f8-9950-8008-a146-e7971c864d3a";
-    console.log(`📄 Converting page ${testPageId} to markdown...`);
-
-    const markdown = await n2m.pageToMarkdown(testPageId);
-
-    console.log("📝 Raw Markdown Output:");
-    console.log("----------------------");
-    console.log(markdown);
-    console.log("----------------------");
-    console.log("✨ Notion-to-markdown test completed!");
-  } catch (error) {
-    console.error("❌ Notion-to-markdown test failed:");
     if (error instanceof Error) {
       console.error(`   Error: ${error.message}`);
       console.error(`   Stack: ${error.stack}`);
@@ -175,18 +120,11 @@ const main = () => {
       testNoblogIntegration();
       break;
 
-    case "n2m":
-    case "notion-to-md":
-      console.log("Running Notion-to-Markdown direct test...\n");
-      testNotionToMarkdown();
-      break;
-
     case "help":
     case "--help":
     case "-h":
       console.log("Available commands:");
       console.log("  test, noblog     - Run Noblog integration test");
-      console.log("  n2m, notion-to-md - Run Notion-to-Markdown direct test");
       console.log("  help             - Show this help message");
       console.log("\nExamples:");
       console.log("  node dist/index.js test");

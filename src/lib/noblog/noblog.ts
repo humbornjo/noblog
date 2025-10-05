@@ -1,16 +1,30 @@
 import * as path from "path";
 import * as fs from "fs/promises";
 import * as fmt from "./format.js";
-import type { Page } from "../notion/object.js";
 import {
-  GetPageMeta,
+  GetPage,
   GetBlockChildren,
   client as notion_client,
-  type ListBlockChildrenResponseResult,
-  type ListBlockChildrenResponseResults,
 } from "../notion/client.js";
-import type { Range } from "./utils.js";
-import type { Equation, Text } from "notion-to-md/build/types/index.js";
+import {
+  type Range,
+  type CalloutIcon,
+  BLOCK_BULLETED_LIST_ITEM,
+  BLOCK_CALLOUT,
+  BLOCK_CHILD_PAGE,
+  BLOCK_NUMBERED_LIST_ITEM,
+  BLOCK_SYNCED_BLOCK,
+  BLOCK_TO_DO,
+  BLOCK_TOGGLE,
+  BLOCK_UNSUPPORTED,
+  LINEWRAP_NEWLINE,
+  LINEWRAP_NULL,
+} from "./utils.js";
+import type {
+  BlockObjectResponse,
+  PageObjectResponse,
+  RichTextItemResponse,
+} from "@notionhq/client";
 
 // from notion-to-md
 type MdBlock = {
@@ -26,11 +40,37 @@ export type MdJelly = {
 };
 
 export type CustomTransformer = (
-  block: ListBlockChildrenResponseResult,
+  block: BlockObjectResponse,
 ) => string | boolean | Promise<string | boolean>;
 
+async function SaveJelly(
+  fname: string,
+  dir: string,
+  jelly: MdJelly | undefined,
+  dry_run: boolean = false,
+): Promise<string> {
+  if (jelly === undefined) return `failed: ${fname} has empty jelly: `;
+
+  try {
+    if (dry_run) {
+      console.log(jelly.content);
+      return `success: ${fname} saved to ${dir}`;
+    }
+    await fs.mkdir(dir, { recursive: true });
+    const filePath = path.join(dir, fname);
+    await fs.writeFile(filePath, jelly.content, "utf-8");
+    return `success: ${fname} saved to ${filePath}`;
+  } catch (error) {
+    if (error instanceof Error) {
+      return `failed: ${fname} - ${error.message}`;
+    } else {
+      return "failed: an unknown error occurred";
+    }
+  }
+}
+
 export class Noblog {
-  Posts: Page[] = [];
+  Posts: PageObjectResponse[] = [];
   CurrPage: string = "";
   SavePath: string = "./src/pages/posts/";
   ChildPath: string = "nob_children/";
@@ -38,7 +78,12 @@ export class Noblog {
   MdCollection: Record<string, MdJelly> = {};
   CustomTransformers: Record<string, CustomTransformer> = {};
 
-  constructor(posts: Page[], save_path?: string, child_path?: string, layout_path?: string) {
+  constructor(
+    posts: PageObjectResponse[],
+    save_path?: string,
+    child_path?: string,
+    layout_path?: string,
+  ) {
     this.Posts = posts;
     if (child_path != undefined) {
       this.ChildPath = child_path;
@@ -82,18 +127,19 @@ export class Noblog {
     };
   }
 
-  async Collect(recur: boolean = true) {
+  // Collect converts all pages in database to markdown files
+  async Collect(recursive: boolean = true) {
     const save_dir = this.SavePath;
     const sub_dir = path.join(save_dir, this.ChildPath);
     for (const page of this.Posts) {
-      await this.FromPageid(page.id, recur);
+      await this.FromPageId(page.id, recursive);
     }
 
     try {
-      for (const pageid of Object.keys(this.MdCollection)) {
+      for (const page_id of Object.keys(this.MdCollection)) {
         let fpath = sub_dir;
-        if (this.Posts.find((page) => page.id === pageid)) fpath = save_dir;
-        await this.SaveJelly(pageid + ".md", fpath, this.MdCollection[pageid]);
+        if (this.Posts.find((page) => page.id === page_id)) fpath = save_dir;
+        await SaveJelly(page_id + ".md", fpath, this.MdCollection[page_id]);
       }
       console.log(`success: finish dump all files to "${save_dir}"`);
     } catch (error) {
@@ -107,29 +153,38 @@ export class Noblog {
     }
   }
 
+  // FromBlocks converts blocks fetched from notion api to
+  // rendered chunk (which is called jelly). Content in jelly
+  // will be collected to form the final markdown. If recursive
+  // is true, it will also fetch child pages exists in the given
+  // blocks.
   async FromBlocks(blocks: MdBlock[], recursive: boolean): Promise<MdJelly> {
     const jelly: MdJelly = { content: "", children: [] };
     for (const block of blocks) {
       const subjelly = await this.FromBlocks(block.children, recursive);
 
-      if (block.type === "toggle") {
-        jelly.content += fmt.toggle(block.parent, subjelly.content);
-        jelly.children = [...jelly.children, ...subjelly.children];
-        continue;
-      }
-      let line_wrap = "";
+      let line_wrap = LINEWRAP_NULL;
       if (
-        block.type !== "to_do" &&
-        block.type !== "bulleted_list_item" &&
-        block.type !== "numbered_list_item"
+        block.type !== BLOCK_TO_DO &&
+        block.type !== BLOCK_BULLETED_LIST_ITEM &&
+        block.type !== BLOCK_NUMBERED_LIST_ITEM
       ) {
-        line_wrap = "\n";
+        line_wrap = LINEWRAP_NEWLINE;
       }
-      jelly.content +=
-        line_wrap + `${fmt.addTabSpace(block.parent, 0)}\n` + line_wrap;
-      if (block.type === "child_page") {
+
+      switch (block.type) {
+        case BLOCK_TOGGLE:
+          jelly.content += fmt.toggle(block.parent, subjelly.content);
+          jelly.children = [...jelly.children, ...subjelly.children];
+          continue;
+        default:
+          jelly.content +=
+            line_wrap + `${fmt.addTabSpace(block.parent, 0)}\n` + line_wrap;
+      }
+
+      if (block.type === BLOCK_CHILD_PAGE) {
         jelly.children = [...jelly.children, block.blockId];
-        if (recursive) await this.FromPageid(block.blockId, recursive);
+        if (recursive) await this.FromPageId(block.blockId, recursive);
       } else {
         jelly.content += subjelly.content;
         jelly.children = [...jelly.children, ...subjelly.children];
@@ -138,17 +193,24 @@ export class Noblog {
     return jelly;
   }
 
-  async FromPageid(page_id: string, recursive: boolean = true) {
+  // FromPageid converts a page id to rendered chunk (which is
+  // called jelly). Content in jelly will be collected to form
+  // the final markdown. If recursive is true, it will also
+  // fetch child pages exists in the given page.
+  async FromPageId(
+    page_id: string,
+    recursive: boolean = true,
+  ): Promise<MdJelly> {
     // preserve the curr page info
     const prev_page = this.CurrPage;
     this.CurrPage = page_id;
 
     if (this.MdCollection.hasOwnProperty(page_id)) {
-      return this.MdCollection[page_id];
+      return this.MdCollection[page_id]!;
     }
     const blocks = await this.PageToMarkdown(page_id);
     const jelly = await this.FromBlocks(blocks, recursive);
-    const meta = await GetPageMeta(page_id);
+    const meta = await GetPage(page_id);
     const astro_meta = await this.AssembleAstroFrontmatter(meta);
     jelly.content = astro_meta + jelly.content;
     this.MdCollection[page_id] = jelly;
@@ -163,9 +225,7 @@ export class Noblog {
     totalPage?: number | null | undefined,
   ): Promise<MdBlock[]> {
     if (!notion_client) {
-      throw new Error(
-        "notion client is not provided, for more details check out https://github.com/souvikinator/notion-to-md",
-      );
+      throw new Error("notion client is not provided");
     }
     const blocks = await GetBlockChildren(id, totalPage);
     const parsedData = await this.BlocksToMarkdown(blocks);
@@ -173,82 +233,71 @@ export class Noblog {
   }
 
   async BlocksToMarkdown(
-    blocks?: ListBlockChildrenResponseResults,
+    blocks?: BlockObjectResponse[],
     totalPage: number | null = null,
     mdBlocks: MdBlock[] = [],
   ): Promise<MdBlock[]> {
     if (!notion_client) {
-      throw new Error(
-        "notion client is not provided, for more details check out https://github.com/souvikinator/notion-to-md",
-      );
+      throw new Error("notion client is not provided");
     }
 
-    if (!mdBlocks) mdBlocks = [];
     if (!blocks) return mdBlocks;
-
-    for (let i = 0; i < blocks.length; i++) {
-      const block: ListBlockChildrenResponseResult = blocks[i]!;
-
-      if (
-        // @ts-ignore
-        block.type === "unsupported"
-      ) {
+    for (const block of blocks) {
+      // @ts-ignore
+      if (block.type === BLOCK_UNSUPPORTED) {
         continue;
       }
 
-      if ("has_children" in block && block.has_children) {
-        const block_id =
-          block.type == "synced_block" &&
-          block.synced_block?.synced_from?.block_id
-            ? block.synced_block.synced_from.block_id
-            : block.id;
-        // Get children of this block.
-        const child_blocks = await GetBlockChildren(block_id, totalPage);
-
-        // Push this block to mdBlocks.
+      if (!("has_children" in block) || !block.has_children) {
         mdBlocks.push({
+          // @ts-ignore
           type: block.type,
           blockId: block.id,
-          parent: await this.BlockToMarkdown(block),
           children: [],
+          parent: await this.BlockToMarkdown(block),
         });
-
-        // Recursively call BlocksToMarkdown to get children of this block.
-        // check for custom transformer before parsing child
-        if (
-          !(block.type in this.CustomTransformers) &&
-          !this.CustomTransformers[block.type]
-        ) {
-          const l = mdBlocks.length;
-          if (mdBlocks !== undefined) {
-            await this.BlocksToMarkdown(
-              child_blocks,
-              totalPage,
-              mdBlocks[l - 1]?.children,
-            );
-          }
-        }
-
         continue;
       }
 
-      const tmp = await this.BlockToMarkdown(block);
+      const block_id =
+        block.type == BLOCK_SYNCED_BLOCK &&
+          block.synced_block?.synced_from?.block_id
+          ? block.synced_block.synced_from.block_id
+          : block.id;
+      // Get children of this block.
+      const child_blocks = await GetBlockChildren(block_id, totalPage);
+
+      // Push this block to mdBlocks.
       mdBlocks.push({
-        // @ts-ignore
         type: block.type,
         blockId: block.id,
-        parent: tmp,
+        parent: await this.BlockToMarkdown(block),
         children: [],
       });
+
+      if (block.type === BLOCK_CALLOUT) {
+        continue;
+      }
+
+      if (!(block.type in this.CustomTransformers)) {
+        continue;
+      }
+
+      // Recursively call BlocksToMarkdown to collect children. check for custom transformer before parsing child
+      if (mdBlocks !== undefined) {
+        await this.BlocksToMarkdown(
+          child_blocks,
+          totalPage,
+          mdBlocks[mdBlocks.length - 1]?.children,
+        );
+      }
     }
     return mdBlocks;
   }
 
-  async BlockToMarkdown(
-    block: ListBlockChildrenResponseResult,
-  ): Promise<string> {
+  async BlockToMarkdown(block: BlockObjectResponse): Promise<string> {
     if (typeof block !== "object" || !("type" in block)) return "";
-    let parsedData = "";
+    let renderedData = "";
     const { type } = block;
     if (type in this.CustomTransformers && !!this.CustomTransformers[type]) {
       const transformer = this.CustomTransformers[type]!;
@@ -377,7 +426,7 @@ export class Noblog {
                 await this.BlockToMarkdown({
                   type: "paragraph",
                   paragraph: { rich_text: cell },
-                } as ListBlockChildrenResponseResult),
+                } as BlockObjectResponse),
             );
 
             const cellStringArr = await Promise.all(cellStringPromise);
@@ -419,7 +468,7 @@ export class Noblog {
         };
 
         for (let i = 0; i < blockContent.length; i++) {
-          const content: Text | Equation = blockContent[i] as any;
+          const content: RichTextItemResponse = blockContent[i] as any;
           if (content.type === "equation") {
             bucket.push(fmt.inlineEquation(content.equation.expression));
             continue;
@@ -463,32 +512,32 @@ export class Noblog {
           // @ts-ignore
           bucket[to - 1] = bucket[to - 1] + sanno;
         }
-        bucket.forEach((x) => (parsedData += x));
+        bucket.forEach((x) => (renderedData += x));
       }
     }
 
     switch (type) {
       case "code":
-        parsedData = fmt.codeBlock(parsedData, block[type].language);
+        renderedData = fmt.codeBlock(renderedData, block[type].language);
         break;
       case "heading_1":
-        parsedData = fmt.heading1(parsedData);
+        renderedData = fmt.heading1(renderedData);
         break;
       case "heading_2":
-        parsedData = fmt.heading2(parsedData);
+        renderedData = fmt.heading2(renderedData);
         break;
       case "heading_3":
-        parsedData = fmt.heading3(parsedData);
+        renderedData = fmt.heading3(renderedData);
         break;
       case "quote":
-        parsedData = fmt.quote(parsedData);
+        renderedData = fmt.quote(renderedData);
         break;
       case "callout":
         const { id, has_children } = block;
         let callout_string = "";
 
         if (!has_children) {
-          return fmt.callout(parsedData, block[type].icon);
+          return fmt.callout(renderedData, block.callout.icon as CalloutIcon);
         }
 
         const callout_children_object = await GetBlockChildren(id, 100);
@@ -496,82 +545,81 @@ export class Noblog {
           callout_children_object,
         );
 
-        callout_string += `${parsedData}\n`;
-        callout_children.map((child) => {
-          callout_string += `${child.parent}\n\n`;
-        });
+        callout_string += `${renderedData}\n`;
+        callout_string += (await this.FromBlocks(callout_children, true))
+          .content;
 
-        parsedData = fmt.callout(callout_string.trim(), block[type].icon);
+        renderedData = fmt.callout(
+          callout_string.trim(),
+          block.callout.icon as CalloutIcon,
+        );
         break;
       case "bulleted_list_item":
-        parsedData = fmt.bullet(parsedData);
+        renderedData = fmt.bullet(renderedData);
         break;
       case "numbered_list_item":
-        parsedData = fmt.bullet(parsedData, block.numbered_list_item.number);
+        renderedData = fmt.bullet(
+          renderedData,
+          (block.numbered_list_item as any).number, // @ts-ignore // number is annotated manually
+        );
         break;
       case "to_do":
-        parsedData = fmt.todo(parsedData, block.to_do.checked);
+        renderedData = fmt.todo(renderedData, block.to_do.checked);
         break;
     }
 
-    return parsedData;
+    return renderedData;
   }
 
-  async SaveJelly(
-    fname: string,
-    dir: string,
-    jelly: MdJelly | undefined,
-  ): Promise<string> {
-    if (jelly === undefined) return `failed: ${fname} has empty jelly: `;
-    try {
-      await fs.mkdir(dir, { recursive: true });
-      const filePath = path.join(dir, fname);
-      await fs.writeFile(filePath, jelly.content, "utf-8");
-      return `success: ${fname} saved to ${filePath}`;
-    } catch (error) {
-      if (error instanceof Error) {
-        return `failed: ${fname} - ${error.message}`;
-      } else {
-        return "failed: an unknown error occurred";
-      }
-    }
-  }
-
-  async AssembleAstroFrontmatter(page: Page) {
+  async AssembleAstroFrontmatter(page: PageObjectResponse) {
     let frontmatter = "";
-    // default layout
+    // Default layout
     const ischild =
       this.Posts.filter((post) => post.id === page.id).length > 0 ? "" : "../";
-    frontmatter +=
-      "layout: " + ischild + this.LayoutPath + "\n";
-    // get title
-    frontmatter +=
-      "title: " +
-      JSON.stringify(page.properties.title?.title?.[0]?.plain_text ?? "") +
-      "\n";
-    // get tags
-    frontmatter +=
-      "tags: " +
-      JSON.stringify(
-        (page.properties.tags?.multi_select ?? []).map((tag) => tag.name),
-      ) +
-      "\n";
-    // get date
-    frontmatter +=
-      "pubDate: " +
-      (page.properties.date?.date?.start ??
-        new Date().toISOString().split("T")[0]) +
-      "\n";
-    // get archived
-    frontmatter +=
-      "archived: " + (page.properties.archived ? "true" : "false") + "\n";
-    // get description
-    frontmatter +=
-      "description: " +
-      JSON.stringify(
-        page.properties.description?.rich_text?.[0]?.plain_text ?? "",
-      ) +
-      "\n";
+    frontmatter += "layout: " + ischild + this.LayoutPath + "\n";
+
+    Object.entries(page.properties).forEach(([key, property]) => {
+      switch (property.type) {
+        case "title": // Get title
+          frontmatter +=
+            "title: " +
+            JSON.stringify(property.title?.[0]?.plain_text ?? "") +
+            "\n";
+          break;
+        case "multi_select": // Get tags
+          frontmatter +=
+            "tags: " +
+            JSON.stringify(property.multi_select.map((tag) => tag.name)) +
+            "\n";
+          break;
+        case "date": // Get date
+          frontmatter +=
+            "pubDate: " +
+            (property.date?.start ?? new Date().toISOString().split("T")[0]) +
+            "\n";
+          break;
+        default: // Customized properties from the template given in the Github repo
+          switch (key) {
+            case "archived": // Get archived
+              if (property.type === "checkbox")
+                frontmatter +=
+                  "archived: " + (property as any).checkbox
+                    ? "true"
+                    : "false" + "\n";
+              break;
+            case "description": // Get description
+              if (property.type === "rich_text")
+                frontmatter +=
+                  "description: " +
+                  JSON.stringify(property.rich_text?.[0]?.plain_text ?? "") +
+                  "\n";
+              break;
+            default:
+              break;
+          }
+      }
+    });
+
     return "---\n" + frontmatter + "---\n";
   }
 }

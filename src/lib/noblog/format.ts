@@ -1,5 +1,6 @@
 import fetch from "node-fetch";
 import { markdownTable } from "markdown-table";
+import type { CalloutIcon } from "./utils.js";
 
 const suffixInlineCode = "`";
 const prefixInlineCode = "`";
@@ -32,12 +33,6 @@ export function GetPrefixSuffix(type: string): [string, string] {
       return ["", ""];
   }
 }
-
-type CalloutIcon =
-  | { type: "emoji"; emoji?: string }
-  | { type: "external"; external?: { url: string } }
-  | { type: "file"; file: { url: string; expiry_time: string } }
-  | null;
 
 export const inlineCode = (text: string) => {
   return `\`${text}\``;
