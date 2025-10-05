@@ -1,6 +1,6 @@
 {
   "name": "noblog",
-  "version": "0.2.0",
+  "version": "0.2.0-beta",
   "description": "Generate static blog content from a Notion.so table.",
   "author": "humbornjo",
   "license": "MIT",
