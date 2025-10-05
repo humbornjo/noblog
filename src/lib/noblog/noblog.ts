@@ -279,7 +279,7 @@ export class Noblog {
 
       const block_id =
         block.type == BLOCK_SYNCED_BLOCK &&
-          block.synced_block?.synced_from?.block_id
+        block.synced_block?.synced_from?.block_id
           ? block.synced_block.synced_from.block_id
           : block.id;
       // Get children of this block.
@@ -601,7 +601,11 @@ export class Noblog {
         case "title": // Get title
           frontmatter +=
             "title: " +
-            JSON.stringify(property.title?.[0]?.plain_text ?? "") +
+            JSON.stringify(
+              property.title
+                ?.map((title) => title.plain_text)
+                .reduce((a, b) => a + b),
+            ) +
             "\n";
           break;
         case "multi_select": // Get tags
