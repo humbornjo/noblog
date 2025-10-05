@@ -17,6 +17,24 @@ import {
   BLOCK_TO_DO,
   BLOCK_TOGGLE,
   BLOCK_UNSUPPORTED,
+  BLOCK_IMAGE,
+  BLOCK_DIVIDER,
+  BLOCK_EQUATION,
+  BLOCK_PDF,
+  BLOCK_FILE,
+  BLOCK_VIDEO,
+  BLOCK_EMBED,
+  BLOCK_BOOKMARK,
+  BLOCK_LINK_PREVIEW,
+  BLOCK_LINK_TO_PAGE,
+  BLOCK_CHILD_DATABASE,
+  BLOCK_TABLE,
+  BLOCK_CODE,
+  BLOCK_HEADING_1,
+  BLOCK_HEADING_2,
+  BLOCK_HEADING_3,
+  BLOCK_QUOTE,
+  BLOCK_PARAGRAPH,
   LINEWRAP_NEWLINE,
   LINEWRAP_NULL,
 } from "./utils.js";
@@ -95,7 +113,7 @@ export class Noblog {
       this.LayoutPath = layout_path;
     }
 
-    this.CustomTransformers["child_page"] = async (block) => {
+    this.CustomTransformers[BLOCK_CHILD_PAGE] = async (block) => {
       const page = block as any;
       if (!page?.id) {
         return false;
@@ -307,7 +325,7 @@ export class Noblog {
     }
 
     switch (type) {
-      case "image":
+      case BLOCK_IMAGE:
         const blockContent = block.image;
         let image_title = "image";
 
@@ -335,21 +353,21 @@ export class Noblog {
 
         return await fmt.image(image_title, link, false);
 
-      case "divider":
+      case BLOCK_DIVIDER:
         return fmt.divider();
 
-      case "equation":
+      case BLOCK_EQUATION:
         return fmt.equation(block.equation.expression);
 
-      case "pdf":
-      case "file":
-      case "video":
+      case BLOCK_PDF:
+      case BLOCK_FILE:
+      case BLOCK_VIDEO:
         {
           let blockContent;
           let title: string = type;
-          if (type === "pdf") blockContent = block.pdf;
-          if (type === "file") blockContent = block.file;
-          if (type === "video") blockContent = block.video;
+          if (type === BLOCK_PDF) blockContent = block.pdf;
+          if (type === BLOCK_FILE) blockContent = block.file;
+          if (type === BLOCK_VIDEO) blockContent = block.video;
 
           const caption = blockContent?.caption
             .map((item: any) => item.plain_text)
@@ -375,18 +393,18 @@ export class Noblog {
         }
         break;
 
-      case "embed":
-      case "bookmark":
-      case "link_preview":
-      case "link_to_page":
+      case BLOCK_EMBED:
+      case BLOCK_BOOKMARK:
+      case BLOCK_LINK_PREVIEW:
+      case BLOCK_LINK_TO_PAGE:
         {
           let blockContent;
           const title: string = type;
-          if (type === "embed") blockContent = block.embed;
-          if (type === "bookmark") blockContent = block.bookmark;
-          if (type === "link_preview") blockContent = block.link_preview;
+          if (type === BLOCK_EMBED) blockContent = block.embed;
+          if (type === BLOCK_BOOKMARK) blockContent = block.bookmark;
+          if (type === BLOCK_LINK_PREVIEW) blockContent = block.link_preview;
           if (
-            type === "link_to_page" &&
+            type === BLOCK_LINK_TO_PAGE &&
             block.link_to_page.type === "page_id"
           ) {
             blockContent = {
@@ -398,16 +416,16 @@ export class Noblog {
         }
         break;
 
-      case "child_page": {
+      case BLOCK_CHILD_PAGE: {
         const pageTitle: string = block.child_page.title;
         return fmt.heading2(pageTitle);
       }
-      case "child_database": {
+      case BLOCK_CHILD_DATABASE: {
         const pageTitle = block.child_database.title || `child_database`;
         return fmt.heading2(pageTitle);
       }
 
-      case "table": {
+      case BLOCK_TABLE: {
         const { id, has_children } = block;
         const tableArr: string[][] = [];
         if (has_children) {
@@ -424,7 +442,7 @@ export class Noblog {
             const cellStringPromise = cells.map(
               async (cell: any) =>
                 await this.BlockToMarkdown({
-                  type: "paragraph",
+                  type: BLOCK_PARAGRAPH,
                   paragraph: { rich_text: cell },
                 } as BlockObjectResponse),
             );
@@ -517,22 +535,22 @@ export class Noblog {
     }
 
     switch (type) {
-      case "code":
+      case BLOCK_CODE:
         renderedData = fmt.codeBlock(renderedData, block[type].language);
         break;
-      case "heading_1":
+      case BLOCK_HEADING_1:
         renderedData = fmt.heading1(renderedData);
         break;
-      case "heading_2":
+      case BLOCK_HEADING_2:
         renderedData = fmt.heading2(renderedData);
         break;
-      case "heading_3":
+      case BLOCK_HEADING_3:
         renderedData = fmt.heading3(renderedData);
         break;
-      case "quote":
+      case BLOCK_QUOTE:
         renderedData = fmt.quote(renderedData);
         break;
-      case "callout":
+      case BLOCK_CALLOUT:
         const { id, has_children } = block;
         let callout_string = "";
 
@@ -554,16 +572,16 @@ export class Noblog {
           block.callout.icon as CalloutIcon,
         );
         break;
-      case "bulleted_list_item":
+      case BLOCK_BULLETED_LIST_ITEM:
         renderedData = fmt.bullet(renderedData);
         break;
-      case "numbered_list_item":
+      case BLOCK_NUMBERED_LIST_ITEM:
         renderedData = fmt.bullet(
           renderedData,
           (block.numbered_list_item as any).number, // @ts-ignore // number is annotated manually
         );
         break;
-      case "to_do":
+      case BLOCK_TO_DO:
         renderedData = fmt.todo(renderedData, block.to_do.checked);
         break;
     }
