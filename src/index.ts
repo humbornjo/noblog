@@ -51,8 +51,14 @@ const testNoblogIntegration = async () => {
     console.log("📝 Creating Noblog instance with default settings...");
     const noblog = new Noblog(pages);
 
-    console.log("🏗️  Processing pages and generating markdown...");
-    await noblog.Collect(true);
+    const blocks = await noblog.ConvPage(
+      "26af16f8-9950-8007-83aa-e5a13ed31a63",
+    );
+
+    await noblog.RenderJelly(blocks, true);
+
+    // console.log("🏗️ Processing pages and generating markdown...");
+    // await noblog.Collect(true);
 
     console.log("✨ Noblog integration test completed successfully!");
     console.log("📁 Check ./src/pages/posts/ for generated files");

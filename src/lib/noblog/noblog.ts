@@ -171,15 +171,15 @@ export class Noblog {
     }
   }
 
-  // FromBlocks converts blocks fetched from notion api to
+  // RenderJelly converts blocks fetched from notion api to
   // rendered chunk (which is called jelly). Content in jelly
   // will be collected to form the final markdown. If recursive
   // is true, it will also fetch child pages exists in the given
   // blocks.
-  async FromBlocks(blocks: MdBlock[], recursive: boolean): Promise<MdJelly> {
+  async RenderJelly(blocks: MdBlock[], recursive: boolean): Promise<MdJelly> {
     const jelly: MdJelly = { content: "", children: [] };
     for (const block of blocks) {
-      const subjelly = await this.FromBlocks(block.children, recursive);
+      const subjelly = await this.RenderJelly(block.children, recursive);
 
       let line_wrap = LINEWRAP_NULL;
       if (
@@ -226,10 +226,11 @@ export class Noblog {
     if (this.MdCollection.hasOwnProperty(page_id)) {
       return this.MdCollection[page_id]!;
     }
-    const blocks = await this.PageToMarkdown(page_id);
-    const jelly = await this.FromBlocks(blocks, recursive);
-    const meta = await GetPage(page_id);
-    const astro_meta = await this.AssembleAstroFrontmatter(meta);
+    const blocks = await this.ConvPage(page_id);
+    const jelly = await this.RenderJelly(blocks, recursive);
+    const astro_meta = await this.AssembleAstroFrontmatter(
+      await GetPage(page_id),
+    );
     jelly.content = astro_meta + jelly.content;
     this.MdCollection[page_id] = jelly;
 
@@ -238,21 +239,17 @@ export class Noblog {
     return jelly;
   }
 
-  async PageToMarkdown(
-    id: string,
-    totalPage?: number | null | undefined,
-  ): Promise<MdBlock[]> {
+  async ConvPage(id: string): Promise<MdBlock[]> {
     if (!notion_client) {
       throw new Error("notion client is not provided");
     }
-    const blocks = await GetBlockChildren(id, totalPage);
-    const parsedData = await this.BlocksToMarkdown(blocks);
+    const blocks = await GetBlockChildren(id);
+    const parsedData = await this.ConvBlocks(blocks);
     return parsedData;
   }
 
-  async BlocksToMarkdown(
+  async ConvBlocks(
     blocks?: BlockObjectResponse[],
-    totalPage: number | null = null,
     mdBlocks: MdBlock[] = [],
   ): Promise<MdBlock[]> {
     if (!notion_client) {
@@ -272,24 +269,24 @@ export class Noblog {
           type: block.type,
           blockId: block.id,
           children: [],
-          parent: await this.BlockToMarkdown(block),
+          parent: await this.RenderBlock(block),
         });
         continue;
       }
 
       const block_id =
         block.type == BLOCK_SYNCED_BLOCK &&
-        block.synced_block?.synced_from?.block_id
+          block.synced_block?.synced_from?.block_id
           ? block.synced_block.synced_from.block_id
           : block.id;
       // Get children of this block.
-      const child_blocks = await GetBlockChildren(block_id, totalPage);
+      const child_blocks = await GetBlockChildren(block_id);
 
       // Push this block to mdBlocks.
       mdBlocks.push({
         type: block.type,
         blockId: block.id,
-        parent: await this.BlockToMarkdown(block),
+        parent: await this.RenderBlock(block),
         children: [],
       });
 
@@ -303,9 +300,8 @@ export class Noblog {
 
       // Recursively call BlocksToMarkdown to collect children. check for custom transformer before parsing child
       if (mdBlocks !== undefined) {
-        await this.BlocksToMarkdown(
+        await this.ConvBlocks(
           child_blocks,
-          totalPage,
           mdBlocks[mdBlocks.length - 1]?.children,
         );
       }
@@ -313,7 +309,7 @@ export class Noblog {
     return mdBlocks;
   }
 
-  async BlockToMarkdown(block: BlockObjectResponse): Promise<string> {
+  async RenderBlock(block: BlockObjectResponse): Promise<string> {
     if (typeof block !== "object" || !("type" in block)) return "";
     let renderedData = "";
     const { type } = block;
@@ -429,7 +425,7 @@ export class Noblog {
         const { id, has_children } = block;
         const tableArr: string[][] = [];
         if (has_children) {
-          const tableRows = await GetBlockChildren(id, 100);
+          const tableRows = await GetBlockChildren(id);
           const rowsPromise = tableRows?.map(async (row) => {
             const { type } = row as any;
             const cells = (row as any)[type]["cells"];
@@ -441,7 +437,7 @@ export class Noblog {
              */
             const cellStringPromise = cells.map(
               async (cell: any) =>
-                await this.BlockToMarkdown({
+                await this.RenderBlock({
                   type: BLOCK_PARAGRAPH,
                   paragraph: { rich_text: cell },
                 } as BlockObjectResponse),
@@ -550,22 +546,22 @@ export class Noblog {
       case BLOCK_QUOTE:
         renderedData = fmt.quote(renderedData);
         break;
+      case BLOCK_TO_DO:
+        renderedData = fmt.todo(renderedData, block.to_do.checked);
+        break;
       case BLOCK_CALLOUT:
-        const { id, has_children } = block;
-        let callout_string = "";
-
-        if (!has_children) {
+        if (!block.has_children) {
           return fmt.callout(renderedData, block.callout.icon as CalloutIcon);
         }
 
-        const callout_children_object = await GetBlockChildren(id, 100);
-        const callout_children = await this.BlocksToMarkdown(
-          callout_children_object,
+        const callout_children = await this.ConvBlocks(
+          await GetBlockChildren(block.id),
         );
+        const callout_string =
+          `${renderedData}\n` +
+          (await this.RenderJelly(callout_children, true)).content;
 
-        callout_string += `${renderedData}\n`;
-        callout_string += (await this.FromBlocks(callout_children, true))
-          .content;
+        console.log(callout_string);
 
         renderedData = fmt.callout(
           callout_string.trim(),
@@ -573,16 +569,35 @@ export class Noblog {
         );
         break;
       case BLOCK_BULLETED_LIST_ITEM:
-        renderedData = fmt.bullet(renderedData);
+        if (!block.has_children) {
+          return fmt.bullet(renderedData);
+        }
+        const bullet_children = await this.ConvBlocks(
+          await GetBlockChildren(block.id),
+        );
+        const bullet_string =
+          `${renderedData}\n` +
+          (await this.RenderJelly(bullet_children, true)).content;
+
+        renderedData = fmt.bullet(bullet_string);
         break;
       case BLOCK_NUMBERED_LIST_ITEM:
-        renderedData = fmt.bullet(
-          renderedData,
-          (block.numbered_list_item as any).number, // @ts-ignore // number is annotated manually
+        if (!block.has_children) {
+          return fmt.bullet(
+            renderedData,
+            (block.numbered_list_item as any).number,
+          );
+        }
+        const numbered_children = await this.ConvBlocks(
+          await GetBlockChildren(block.id),
         );
-        break;
-      case BLOCK_TO_DO:
-        renderedData = fmt.todo(renderedData, block.to_do.checked);
+        const numbered_string =
+          `${renderedData}\n` +
+          (await this.RenderJelly(numbered_children, true)).content;
+        renderedData = fmt.bullet(
+          numbered_string,
+          (block.numbered_list_item as any).number, // number is annotated manually
+        );
         break;
     }
 
@@ -596,51 +611,53 @@ export class Noblog {
       this.Posts.filter((post) => post.id === page.id).length > 0 ? "" : "../";
     frontmatter += "layout: " + ischild + this.LayoutPath + "\n";
 
+    let title: string = "";
+    let description: string = "";
+    let tags: string[] = [];
+    let pubDate: string = "";
+    let archived: string = "";
+
     Object.entries(page.properties).forEach(([key, property]) => {
       switch (property.type) {
         case "title": // Get title
-          frontmatter +=
-            "title: " +
-            JSON.stringify(
-              property.title
-                ?.map((title) => title.plain_text)
-                .reduce((a, b) => a + b),
-            ) +
-            "\n";
+          title = property.title
+            ?.map((title) => title.plain_text)
+            .reduce((a, b) => a + b, "");
           break;
         case "multi_select": // Get tags
-          frontmatter +=
-            "tags: " +
-            JSON.stringify(property.multi_select.map((tag) => tag.name)) +
-            "\n";
+          tags = property.multi_select?.map((tag) => tag.name);
           break;
         case "date": // Get date
-          frontmatter +=
-            "pubDate: " +
-            (property.date?.start ?? new Date().toISOString().split("T")[0]) +
-            "\n";
+          pubDate =
+            property.date?.start ?? new Date().toISOString().split("T")[0]!;
           break;
         default: // Customized properties from the template given in the Github repo
           switch (key) {
             case "archived": // Get archived
-              if (property.type === "checkbox")
-                frontmatter +=
-                  "archived: " + (property as any).checkbox
-                    ? "true"
-                    : "false" + "\n";
+              archived =
+                property.type === "checkbox" && property.checkbox
+                  ? "true"
+                  : "false";
               break;
             case "description": // Get description
-              if (property.type === "rich_text")
-                frontmatter +=
-                  "description: " +
-                  JSON.stringify(property.rich_text?.[0]?.plain_text ?? "") +
-                  "\n";
+              description =
+                property.type === "rich_text"
+                  ? property.rich_text
+                    ?.map((text) => text.plain_text)
+                    .reduce((a, b) => a + b, "")
+                  : "";
               break;
             default:
               break;
           }
       }
     });
+
+    frontmatter += "title: " + JSON.stringify(title) + "\n";
+    frontmatter += "description: " + JSON.stringify(description) + "\n";
+    frontmatter += "tags: " + JSON.stringify(tags) + "\n";
+    frontmatter += "pubDate: " + JSON.stringify(pubDate) + "\n";
+    frontmatter += "archived: " + JSON.stringify(archived) + "\n";
 
     return "---\n" + frontmatter + "---\n";
   }

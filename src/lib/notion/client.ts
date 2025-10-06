@@ -97,7 +97,7 @@ export async function GetPage(page_id: string): Promise<PageObjectResponse> {
 
 export async function GetBlockChildren(
   block_id: string,
-  totalPage: number | null | undefined,
+  totalPage: number = 100,
 ) {
   const results: Array<BlockObjectResponse> = [];
   let pageCount = 0;

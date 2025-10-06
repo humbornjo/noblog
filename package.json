@@ -1,6 +1,6 @@
 {
   "name": "noblog",
-  "version": "0.2.0-beta",
+  "version": "0.2.3",
   "description": "Generate static blog content from a Notion.so table.",
   "author": "humbornjo",
   "license": "MIT",
@@ -25,7 +25,7 @@
     "url": "https://github.com/humbornjo/noblog.git"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=24"
   },
   "scripts": {
     "dev": "tsc && node ./dist/index.js",
