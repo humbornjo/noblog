@@ -13,7 +13,6 @@ import {
   DEFAULT_LAYOUT_PATH,
   DEFAULT_SAVE_PATH,
   DEFAULT_STORE_PATH,
-  DEFAULT_SUB_PATH,
 } from "./defaults.js";
 import type {
   RenderedPage,
@@ -27,7 +26,6 @@ export async function writePages(
 ): Promise<string[]> {
   const savePath = options.savePath ?? DEFAULT_SAVE_PATH;
   const storePath = options.storePath ?? DEFAULT_STORE_PATH;
-  const subPath = options.subPath ?? DEFAULT_SUB_PATH;
   const writtenPaths: string[] = [];
   await mkdir(storePath, { recursive: true });
 
@@ -39,9 +37,10 @@ export async function writePages(
     }
     await writeFile(storedPath, page.content, "utf8");
 
-    const directory = page.isDatabasePage ? savePath : join(savePath, subPath);
-    const viewPath = join(directory, `${page.id}.md`);
-    await mkdir(directory, { recursive: true });
+    if (!page.isDatabasePage) continue;
+
+    const viewPath = join(savePath, `${page.id}.md`);
+    await mkdir(savePath, { recursive: true });
     await linkStoredPage(storedPath, viewPath);
     writtenPaths.push(viewPath);
   }

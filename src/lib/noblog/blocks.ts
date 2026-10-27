@@ -1,4 +1,3 @@
-import { posix } from "node:path";
 import type {
   BlockObjectResponse,
   RichTextItemResponse,
@@ -216,7 +215,7 @@ async function renderDefaultBlock(
       return md.link(block.type, `https://www.notion.so/${id}`);
     }
     case "child_page":
-      return renderChildPageLink(block, context);
+      return renderChildPageLink(block);
     case "child_database":
       return md.heading2(block.child_database.title || "child_database");
     case "table":
@@ -281,18 +280,8 @@ function renderFileLink(content: FileContent, fallbackTitle: string): string {
 
 function renderChildPageLink(
   block: Extract<BlockObjectResponse, { type: "child_page" }>,
-  context: BlockRenderContext,
 ): string {
-  const parentIsDatabasePage = context.databasePageIds.has(context.pageId);
-  const childIsDatabasePage = context.databasePageIds.has(block.id);
-  const subPath =
-    parentIsDatabasePage === childIsDatabasePage
-      ? ""
-      : parentIsDatabasePage
-        ? context.subPath
-        : "..";
-  const href = posix.join("..", subPath, block.id);
-  return `(」ﾟﾛﾟ)｣ ${md.link(block.child_page.title, href)}`;
+  return `(」ﾟﾛﾟ)｣ ${md.link(block.child_page.title, `./${block.id}.md`)}`;
 }
 
 function renderTable(

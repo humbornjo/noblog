@@ -31,35 +31,37 @@ function renderedPage(
 }
 
 describe("writePages", () => {
-  it("writes one flat store with relative symlinks at the public paths", async () => {
+  it("writes one flat store and links only database pages publicly", async () => {
     const directory = await mkdtemp(join(tmpdir(), "noblog-writer-test-"));
     try {
       const savePath = join(directory, "posts");
       const storePath = join(directory, ".noblog", "pages");
       const paths = await writePages(
         [renderedPage("root", true), renderedPage("child", false)],
-        { savePath, storePath, subPath: "children" },
+        { savePath, storePath },
       );
+      const viewPath = join(savePath, "root.md");
+      const storedPath = join(storePath, "root.md");
 
-      expect(paths).toEqual([
-        join(savePath, "root.md"),
-        join(savePath, "children", "child.md"),
-      ]);
+      expect(paths).toEqual([viewPath]);
       expect((await readdir(storePath)).sort()).toEqual([
         "child.md",
         "root.md",
       ]);
-
-      for (const [index, id] of ["root", "child"].entries()) {
-        const viewPath = paths[index]!;
-        const storedPath = join(storePath, `${id}.md`);
-        expect((await lstat(storedPath)).isFile()).toBe(true);
-        expect((await lstat(viewPath)).isSymbolicLink()).toBe(true);
-        await expect(readlink(viewPath)).resolves.toBe(
-          relative(dirname(viewPath), storedPath),
-        );
-        await expect(readFile(viewPath, "utf8")).resolves.toBe(`# ${id}\n`);
-      }
+      expect((await lstat(viewPath)).isSymbolicLink()).toBe(true);
+      await expect(readlink(viewPath)).resolves.toBe(
+        relative(dirname(viewPath), storedPath),
+      );
+      await expect(readFile(viewPath, "utf8")).resolves.toBe("# root\n");
+      await expect(readFile(join(storePath, "child.md"), "utf8")).resolves.toBe(
+        "# child\n",
+      );
+      await expect(lstat(join(savePath, "child.md"))).rejects.toMatchObject({
+        code: "ENOENT",
+      });
+      await expect(
+        lstat(join(savePath, "children", "child.md")),
+      ).rejects.toMatchObject({ code: "ENOENT" });
     } finally {
       await rm(directory, { recursive: true, force: true });
     }

@@ -63,7 +63,6 @@ describe("page rendering", () => {
 
     const rendered = await renderPages([root], reader, {
       layoutPath: "../Layout.astro",
-      subPath: "children",
     });
     const byId = new Map(rendered.map((item) => [item.id, item]));
     const rootPage = byId.get("root");
@@ -74,11 +73,11 @@ describe("page rendering", () => {
     expect(rootPage?.childPageIds).toEqual(["child"]);
     expect(rootPage?.content).toContain("layout: ../Layout.astro");
     expect(rootPage?.content).toContain('title: "Root"');
-    expect(rootPage?.content).toContain("[Child](../children/child)");
+    expect(rootPage?.content).toContain("[Child](./child.md)");
     expect(childPage?.isDatabasePage).toBe(false);
     expect(childPage?.childPageIds).toEqual(["root"]);
-    expect(childPage?.content).toContain("layout: ../../Layout.astro");
-    expect(childPage?.content).toContain("[Root](../../root)");
+    expect(childPage?.content).toContain("layout: ../Layout.astro");
+    expect(childPage?.content).toContain("[Root](./root.md)");
     expect(getPage).toHaveBeenCalledTimes(1);
     expect(getPage).toHaveBeenCalledWith("child");
     expect(getBlockChildren).toHaveBeenCalledTimes(2);

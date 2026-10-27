@@ -2,6 +2,8 @@ import type {
   BlockObjectResponse,
   PageObjectResponse,
 } from "@notionhq/client";
+import type { NotionPropertyMap } from "./config.js";
+import type { PageMetadata } from "./metadata.js";
 
 export type CalloutIcon = Extract<
   BlockObjectResponse,
@@ -15,10 +17,19 @@ export interface NotionReader {
   ): Promise<readonly BlockObjectResponse[]>;
 }
 
+export interface FrontmatterContext {
+  readonly page: PageObjectResponse;
+  readonly metadata: PageMetadata;
+  readonly layoutPath: string;
+  readonly isDatabasePage: boolean;
+}
+
+export type FrontmatterAdapter = (
+  context: FrontmatterContext,
+) => Readonly<Record<string, unknown>>;
+
 export interface BlockTransformerContext {
   readonly pageId: string;
-  readonly databasePageIds: ReadonlySet<string>;
-  readonly subPath: string;
 }
 
 export type BlockTransformer = (
@@ -32,9 +43,9 @@ export type BlockTransformers = Readonly<
 
 export interface RenderOptions {
   readonly layoutPath?: string;
-  readonly nestedLayoutPath?: string;
-  readonly subPath?: string;
   readonly recursive?: boolean;
+  readonly propertyMap?: NotionPropertyMap;
+  readonly frontmatter?: FrontmatterAdapter;
   readonly transformers?: BlockTransformers;
 }
 
@@ -48,7 +59,6 @@ export interface RenderedPage {
 export interface WritePagesOptions {
   readonly savePath?: string;
   readonly storePath?: string;
-  readonly subPath?: string;
 }
 
 export interface StoreLayoutOptions {

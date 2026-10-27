@@ -1,10 +1,4 @@
 import { buildCommand } from "@stricli/core";
-import {
-  DEFAULT_LAYOUT_PATH,
-  DEFAULT_SAVE_PATH,
-  DEFAULT_STORE_PATH,
-  DEFAULT_SUB_PATH,
-} from "../lib/noblog/defaults.js";
 
 export const generateCommand = buildCommand({
   loader: async () => import("./generate.impl.js"),
@@ -16,19 +10,26 @@ export const generateCommand = buildCommand({
         default: false,
         withNegated: false,
       },
+      config: {
+        kind: "parsed",
+        brief: "YAML configuration file",
+        placeholder: "PATH",
+        parse: (input) => input,
+        optional: true,
+      },
       layout: {
         kind: "parsed",
         brief: "Layout path relative to SAVE_PATH",
         placeholder: "PATH",
         parse: (input) => input,
-        default: DEFAULT_LAYOUT_PATH,
+        optional: true,
       },
       store: {
         kind: "parsed",
         brief: "Directory for canonical Markdown files",
         placeholder: "PATH",
         parse: (input) => input,
-        default: DEFAULT_STORE_PATH,
+        optional: true,
       },
     },
     aliases: {
@@ -42,14 +43,12 @@ export const generateCommand = buildCommand({
           placeholder: "SAVE_PATH",
           parse: (input) => input,
           optional: true,
-          default: DEFAULT_SAVE_PATH,
         },
         {
-          brief: "Subdirectory of SAVE_PATH for nested-page views",
+          brief: "Deprecated compatibility argument; ignored",
           placeholder: "SUB_PATH",
           parse: (input) => input,
           optional: true,
-          default: DEFAULT_SUB_PATH,
         },
       ],
     },
@@ -58,6 +57,7 @@ export const generateCommand = buildCommand({
     brief: "Generate blog content from Notion",
     fullDescription:
       "Fetch published pages from Notion and write Astro-compatible Markdown files. " +
-      "SUB_PATH is resolved inside SAVE_PATH.",
+      "Only database posts receive public symlinks; child pages live in the canonical store. " +
+      "The legacy SUB_PATH argument is accepted but ignored.",
   },
 });

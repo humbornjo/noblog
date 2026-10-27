@@ -1,16 +1,20 @@
 import type { NoblogConfig } from "../config.js";
+import type { NotionPropertyMap } from "../lib/noblog/config.js";
 import {
   renderPages,
   resolveStoreLayoutPath,
   writePages,
 } from "../lib/noblog/index.js";
+import type { FrontmatterAdapter } from "../lib/noblog/types.js";
 import { createNotionSource } from "../lib/notion/client.js";
 
 export interface GenerateOptions {
   savePath: string;
   storePath: string;
-  subPath: string;
   layoutPath: string;
+  recursive: boolean;
+  propertyMap?: NotionPropertyMap;
+  frontmatter?: FrontmatterAdapter;
   verbose: boolean;
 }
 
@@ -38,20 +42,19 @@ export async function generateBlog(
       `Found ${posts.length} pages\n` +
         `Save path: ${options.savePath}\n` +
         `Store path: ${options.storePath}\n` +
-        `Sub path: ${options.subPath}\n` +
         `Layout path: ${options.layoutPath}\n`,
     );
   }
 
   const pages = await renderPages(posts, notion, {
     layoutPath: storeLayoutPath,
-    nestedLayoutPath: storeLayoutPath,
-    subPath: options.subPath,
+    recursive: options.recursive,
+    propertyMap: options.propertyMap,
+    frontmatter: options.frontmatter,
   });
   await writePages(pages, {
     savePath: options.savePath,
     storePath: options.storePath,
-    subPath: options.subPath,
   });
 
   output.stdout.write("✅ Successfully generated blog content\n");

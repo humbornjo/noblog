@@ -1,0 +1,30 @@
+# Matches Nobloger's MarkdownPostLayout and blog listing contract.
+version: 1
+notion:
+  properties:
+    title: Name
+    description: description
+    tags: tags
+    publishedAt: date
+output:
+  savePath: src/pages/posts/
+  storePath: .noblog/pages/
+  layoutPath: ../../layouts/MarkdownPostLayout.astro
+  recursive: true
+frontmatter:
+  fields:
+    layout:
+      from: layoutPath
+    title:
+      from: title
+      required: true
+    pubDate:
+      from: publishedAt
+      as: string
+      required: true
+    tags:
+      from: tags
+      default: []
+    description:
+      from: description
+      omitEmpty: true

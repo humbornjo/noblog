@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { createRequire } from "node:module";
 import { mkdtempSync, rmSync } from "node:fs";
-import { lstat, readFile, stat } from "node:fs/promises";
+import { lstat, readFile, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -30,6 +30,7 @@ const help = run("--help");
 assert.equal(help.status, 0, help.stderr);
 assert.match(help.stdout, /noblog generate/);
 assert.match(help.stdout, /--store/);
+assert.match(help.stdout, /config/);
 
 for (const args of [["--version"], ["version"]]) {
   const version = run(...args);
@@ -46,6 +47,18 @@ assert.equal(unconfigured.status, 2, unconfigured.stderr);
 assert.match(unconfigured.stderr, /NOTION_API_SECRET/);
 assert.match(unconfigured.stderr, /NOBLOG_DATABASE_ID/);
 
+const validConfigPath = join(cwd, "noblog.yaml");
+await writeFile(validConfigPath, "version: 1\n", "utf8");
+const validConfig = run("config", "check", "--config", validConfigPath);
+assert.equal(validConfig.status, 0, validConfig.stderr);
+assert.match(validConfig.stdout, /Configuration valid/);
+
+const invalidConfigPath = join(cwd, "invalid.yaml");
+await writeFile(invalidConfigPath, "version: 2\n", "utf8");
+const invalidConfig = run("config", "check", "--config", invalidConfigPath);
+assert.equal(invalidConfig.status, 2, invalidConfig.stderr);
+assert.match(invalidConfig.stderr, /Invalid Noblog config/);
+
 const executable = await stat(cli);
 assert.notEqual(executable.mode & 0o111, 0, "CLI must be executable");
 
@@ -55,6 +68,7 @@ assert.equal(typeof library.renderPages, "function");
 assert.equal(typeof library.writePages, "function");
 assert.equal(typeof library.createNotionSource, "function");
 assert.equal(typeof library.resolveStoreLayoutPath, "function");
+assert.equal(typeof library.createFrontmatterAdapter, "function");
 assert.equal("generateBlog" in library, false);
 
 const viewPaths = await library.writePages(
@@ -62,8 +76,14 @@ const viewPaths = await library.writePages(
     {
       id: "root",
       content: "# Root\n",
-      childPageIds: [],
+      childPageIds: ["child"],
       isDatabasePage: true,
+    },
+    {
+      id: "child",
+      content: "# Child\n",
+      childPageIds: [],
+      isDatabasePage: false,
     },
   ],
   {
@@ -71,13 +91,23 @@ const viewPaths = await library.writePages(
     storePath: join(cwd, "store"),
   },
 );
+assert.equal(viewPaths.length, 1);
 assert.equal((await lstat(join(cwd, "store", "root.md"))).isFile(), true);
+assert.equal((await lstat(join(cwd, "store", "child.md"))).isFile(), true);
 assert.equal((await lstat(viewPaths[0])).isSymbolicLink(), true);
 assert.equal(await readFile(viewPaths[0], "utf8"), "# Root\n");
+await assert.rejects(lstat(join(cwd, "views", "child.md")), {
+  code: "ENOENT",
+});
+await assert.rejects(lstat(join(cwd, "views", "nob_children", "child.md")), {
+  code: "ENOENT",
+});
 
 const require = createRequire(import.meta.url);
 const commonjs = require("noblog");
 assert.equal(typeof commonjs.renderPages, "function");
+const configSchema = require("noblog/config.schema.json");
+assert.equal(configSchema.properties.version.const, 1);
 
 const declarations = await readFile(
   new URL("../dist/index.d.ts", import.meta.url),

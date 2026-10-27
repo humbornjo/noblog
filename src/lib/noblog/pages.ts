@@ -1,9 +1,11 @@
 import type { PageObjectResponse } from "@notionhq/client";
 import { loadBlockTree, renderBlockTree } from "./blocks.js";
-import { DEFAULT_LAYOUT_PATH, DEFAULT_SUB_PATH } from "./defaults.js";
+import { DEFAULT_LAYOUT_PATH } from "./defaults.js";
 import { renderFrontmatter } from "./frontmatter.js";
+import type { NotionPropertyMap } from "./config.js";
 import type {
   BlockTransformers,
+  FrontmatterAdapter,
   NotionReader,
   RenderedPage,
   RenderOptions,
@@ -13,8 +15,8 @@ interface PageRenderContext {
   readonly reader: NotionReader;
   readonly databasePageIds: ReadonlySet<string>;
   readonly layoutPath: string;
-  readonly nestedLayoutPath?: string;
-  readonly subPath: string;
+  readonly propertyMap?: NotionPropertyMap;
+  readonly frontmatter?: FrontmatterAdapter;
   readonly recursive: boolean;
   readonly transformers?: BlockTransformers;
   readonly renderedPages: Map<string, Promise<RenderedPage>>;
@@ -56,8 +58,8 @@ function createContext(
     reader,
     databasePageIds: new Set(databasePageIds),
     layoutPath: options.layoutPath ?? DEFAULT_LAYOUT_PATH,
-    nestedLayoutPath: options.nestedLayoutPath,
-    subPath: options.subPath ?? DEFAULT_SUB_PATH,
+    propertyMap: options.propertyMap,
+    frontmatter: options.frontmatter,
     recursive: options.recursive ?? true,
     transformers: options.transformers,
     renderedPages: new Map(),
@@ -96,13 +98,12 @@ async function renderSinglePage(
   ]);
   const rendered = await renderBlockTree(blockTree, {
     pageId,
-    databasePageIds: context.databasePageIds,
-    subPath: context.subPath,
     transformers: context.transformers,
   });
   const frontmatter = renderFrontmatter(page, {
     layoutPath: context.layoutPath,
-    nestedLayoutPath: context.nestedLayoutPath,
+    propertyMap: context.propertyMap,
+    frontmatter: context.frontmatter,
     isDatabasePage: context.databasePageIds.has(pageId),
   });
 

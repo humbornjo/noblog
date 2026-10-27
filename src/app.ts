@@ -7,12 +7,14 @@ import {
   version,
 } from "@stricli/core";
 import packageJson from "../package.json" with { type: "json" };
+import { configCommand } from "./commands/config.js";
 import { generateCommand } from "./commands/generate.js";
 import { ConfigurationError } from "./config.js";
 import type { CliContext } from "./context.js";
 
 const root = buildRouteMap({
   routes: {
+    config: configCommand,
     generate: generateCommand,
   },
   docs: {
@@ -20,7 +22,7 @@ const root = buildRouteMap({
     fullDescription:
       "Running noblog without a subcommand is equivalent to 'noblog generate'.\n" +
       "The legacy 'help' and 'version' commands are also supported.\n\n" +
-      "Required environment variables:\n" +
+      "Generation requires environment variables:\n" +
       "  NOTION_API_SECRET    Your Notion API secret\n" +
       "  NOBLOG_DATABASE_ID   Your Notion database ID",
   },
@@ -56,7 +58,7 @@ export const app = buildApplication(
   },
 );
 
-const PATH_FLAGS = new Set(["--layout", "--store"]);
+const PATH_FLAGS = new Set(["--config", "--layout", "--store"]);
 
 export async function runCli(
   inputs: readonly string[],
@@ -93,6 +95,7 @@ export async function runCli(
 
     if (
       normalizedInputs[0] !== "generate" &&
+      normalizedInputs[0] !== "config" &&
       normalizedInputs[0] !== "-h" &&
       normalizedInputs[0] !== "--help" &&
       normalizedInputs[0] !== "--version"

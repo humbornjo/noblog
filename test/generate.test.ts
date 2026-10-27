@@ -37,11 +37,15 @@ describe("generateBlog", () => {
 
   it("renders and writes pages through the package API", async () => {
     const config = { notionApiSecret: "secret", databaseId: "database" };
+    const propertyMap = { series: "Series" };
+    const frontmatter = () => ({ title: "Custom" });
     const options = {
       savePath: "posts",
       storePath: "store",
-      subPath: "children",
       layoutPath: "../Layout.astro",
+      recursive: false,
+      propertyMap,
+      frontmatter,
       verbose: false,
     };
     const output = {
@@ -54,13 +58,13 @@ describe("generateBlog", () => {
     expect(mocks.createNotionSource).toHaveBeenCalledWith(config);
     expect(mocks.renderPages).toHaveBeenCalledWith([], mocks.notion, {
       layoutPath: "../Layout.astro",
-      nestedLayoutPath: "../Layout.astro",
-      subPath: "children",
+      recursive: false,
+      propertyMap,
+      frontmatter,
     });
     expect(mocks.writePages).toHaveBeenCalledWith([], {
       savePath: "posts",
       storePath: "store",
-      subPath: "children",
     });
     expect(output.stdout.write).toHaveBeenCalledWith(
       "✅ Successfully generated blog content\n",
@@ -80,8 +84,8 @@ describe("generateBlog", () => {
       {
         savePath: "posts",
         storePath: "store",
-        subPath: "children",
         layoutPath: "../Layout.astro",
+        recursive: true,
         verbose: true,
       },
       output,
@@ -93,7 +97,7 @@ describe("generateBlog", () => {
     );
     expect(output.stderr.write).toHaveBeenNthCalledWith(
       2,
-      "Found 1 pages\nSave path: posts\nStore path: store\nSub path: children\nLayout path: ../Layout.astro\n",
+      "Found 1 pages\nSave path: posts\nStore path: store\nLayout path: ../Layout.astro\n",
     );
   });
 });

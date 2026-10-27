@@ -12,8 +12,6 @@ import { block, paragraph, text } from "./fixtures.js";
 
 const context: BlockRenderContext = {
   pageId: "root",
-  databasePageIds: new Set(["root"]),
-  subPath: "children",
 };
 
 function readerFor(
@@ -146,6 +144,20 @@ describe("block tree rendering", () => {
       expect(rendered.content).toContain(expected);
     },
   );
+
+  it("links child pages to sibling canonical Markdown files", async () => {
+    const { reader } = readerFor({
+      root: [
+        block("child", "child_page", { child_page: { title: "Child" } }),
+      ],
+    });
+
+    const tree = await loadBlockTree("root", reader);
+    const rendered = await renderBlockTree(tree, context);
+
+    expect(rendered.content).toContain("[Child](./child.md)");
+    expect(rendered.childPageIds).toEqual(["child"]);
+  });
 
   it("supports custom block transformers with explicit page context", async () => {
     const rendered = await renderBlockTree(

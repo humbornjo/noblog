@@ -1,6 +1,23 @@
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { runCli } from "../src/app.js";
 import { createTestContext } from "./helpers.js";
+
+async function withConfig(
+  source: string,
+  check: (path: string) => Promise<void>,
+): Promise<void> {
+  const directory = await mkdtemp(join(tmpdir(), "noblog-config-test-"));
+  const path = join(directory, "noblog.yaml");
+  await writeFile(path, source, "utf8");
+  try {
+    await check(path);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+}
 
 describe("help and version", () => {
   it.each([
@@ -76,8 +93,10 @@ describe("generate routing and arguments", () => {
         {
           savePath: "./src/pages/posts/",
           storePath: ".noblog/pages/",
-          subPath: "nob_children/",
           layoutPath: "../../layouts/MarkdownPostLayout.astro",
+          recursive: true,
+          propertyMap: undefined,
+          frontmatter: undefined,
           verbose: false,
         },
         context.process,
@@ -85,8 +104,8 @@ describe("generate routing and arguments", () => {
     },
   );
 
-  it("accepts legacy paths and interspersed flags", async () => {
-    const { context, generateBlog } = createTestContext();
+  it("accepts legacy paths with a warning and interspersed flags", async () => {
+    const { context, generateBlog, stderr } = createTestContext();
 
     await runCli(
       [
@@ -104,12 +123,15 @@ describe("generate routing and arguments", () => {
       {
         savePath: "content/blog",
         storePath: ".noblog/pages/",
-        subPath: "children",
         layoutPath: "../PostLayout.astro",
+        recursive: true,
+        propertyMap: undefined,
+        frontmatter: undefined,
         verbose: true,
       },
       context.process,
     );
+    expect(stderr()).toContain("SUB_PATH is deprecated and ignored");
   });
 
   it("accepts a custom canonical page store", async () => {
@@ -124,6 +146,94 @@ describe("generate routing and arguments", () => {
     );
   });
 
+  it("loads output and frontmatter mappings from YAML", async () => {
+    await withConfig(
+      `version: 1
+notion:
+  properties:
+    series: Series
+output:
+  savePath: config/posts
+  storePath: config/store
+  layoutPath: ../ConfigLayout.astro
+  recursive: false
+frontmatter:
+  fields:
+    series:
+      from: series
+      required: true
+`,
+      async (configPath) => {
+        const { context, generateBlog } = createTestContext();
+
+        await runCli(["--config", configPath], context);
+
+        expect(context.process.exitCode).toBe(0);
+        expect(generateBlog).toHaveBeenCalledWith(
+          expect.any(Object),
+          {
+            savePath: "config/posts",
+            storePath: "config/store",
+            layoutPath: "../ConfigLayout.astro",
+            recursive: false,
+            propertyMap: { series: "Series" },
+            frontmatter: expect.any(Function),
+            verbose: false,
+          },
+          context.process,
+        );
+      },
+    );
+  });
+
+  it("prefers explicit CLI paths over YAML output", async () => {
+    await withConfig(
+      `version: 1
+output:
+  savePath: config/posts
+  storePath: config/store
+  layoutPath: ../ConfigLayout.astro
+`,
+      async (configPath) => {
+        const { context, generateBlog } = createTestContext();
+
+        await runCli(
+          [
+            "--config",
+            configPath,
+            "cli/posts",
+            "--store",
+            "cli/store",
+            "--layout",
+            "../CliLayout.astro",
+          ],
+          context,
+        );
+
+        expect(generateBlog).toHaveBeenCalledWith(
+          expect.any(Object),
+          expect.objectContaining({
+            savePath: "cli/posts",
+            storePath: "cli/store",
+            layoutPath: "../CliLayout.astro",
+          }),
+          context.process,
+        );
+      },
+    );
+  });
+
+  it("does not treat a config path as a legacy control word", async () => {
+    const { context, generateBlog, stdout, stderr } = createTestContext();
+
+    await runCli(["--config", "help"], context);
+
+    expect(context.process.exitCode).toBe(2);
+    expect(stdout()).toBe("");
+    expect(stderr()).toContain('Cannot read Noblog config "help"');
+    expect(generateBlog).not.toHaveBeenCalled();
+  });
+
   it("supports escaped dash-prefixed paths", async () => {
     const { context, generateBlog } = createTestContext();
 
@@ -133,7 +243,6 @@ describe("generate routing and arguments", () => {
       expect.any(Object),
       expect.objectContaining({
         savePath: "-posts",
-        subPath: "-children",
       }),
       context.process,
     );
@@ -148,7 +257,6 @@ describe("generate routing and arguments", () => {
       expect.any(Object),
       expect.objectContaining({
         savePath: "posts",
-        subPath: "nob_children/",
       }),
       context.process,
     );
@@ -195,7 +303,7 @@ describe("generate routing and arguments", () => {
 
     expect(generateBlog).toHaveBeenCalledWith(
       expect.any(Object),
-      expect.objectContaining({ savePath: "help", subPath: "version" }),
+      expect.objectContaining({ savePath: "help" }),
       context.process,
     );
     expect(stdout()).toBe("");
@@ -224,6 +332,10 @@ describe("generate routing and arguments", () => {
       message: "Expected input for flag --layout",
     },
     {
+      inputs: ["--config"],
+      message: "Expected input for flag --config",
+    },
+    {
       inputs: ["--store"],
       message: "Expected input for flag --store",
     },
@@ -238,6 +350,58 @@ describe("generate routing and arguments", () => {
 
     expect(context.process.exitCode).toBe(2);
     expect(stderr()).toContain(message);
+    expect(generateBlog).not.toHaveBeenCalled();
+  });
+});
+
+describe("config check", () => {
+  it("validates YAML without credentials or generation", async () => {
+    await withConfig("version: 1\n", async (configPath) => {
+      const { context, generateBlog, stdout, stderr } = createTestContext({});
+
+      await runCli(["config", "check", "--config", configPath], context);
+
+      expect(context.process.exitCode).toBe(0);
+      expect(stdout()).toBe(`Configuration valid: ${configPath}\n`);
+      expect(stderr()).toBe("");
+      expect(generateBlog).not.toHaveBeenCalled();
+    });
+  });
+
+  it.each([
+    {
+      name: "invalid YAML",
+      source: "version: [\n",
+      message: "Invalid YAML",
+    },
+    {
+      name: "schema errors",
+      source: "version: 2\n",
+      message: "Invalid Noblog config",
+    },
+  ])("reports $name as a usage error", async ({ source, message }) => {
+    await withConfig(source, async (configPath) => {
+      const { context, generateBlog, stderr } = createTestContext({});
+
+      await runCli(["config", "check", "--config", configPath], context);
+
+      expect(context.process.exitCode).toBe(2);
+      expect(stderr()).toContain(message);
+      expect(generateBlog).not.toHaveBeenCalled();
+    });
+  });
+
+  it("reports a missing file without reading credentials", async () => {
+    const { context, generateBlog, stderr } = createTestContext({});
+
+    await runCli(
+      ["config", "check", "--config", "/definitely/missing/noblog.yaml"],
+      context,
+    );
+
+    expect(context.process.exitCode).toBe(2);
+    expect(stderr()).toContain("file not found");
+    expect(stderr()).not.toContain("NOTION_API_SECRET");
     expect(generateBlog).not.toHaveBeenCalled();
   });
 });
