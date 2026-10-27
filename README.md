@@ -1,208 +1,220 @@
 # 📝 Noblog
 
-> Transform your Notion content into beautiful static blogs with Astro
+> Generate Astro-compatible Markdown from your Notion database.
 
 [![npm version](https://badge.fury.io/js/noblog.svg)](https://badge.fury.io/js/noblog)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Noblog generates static content from Notion databases and provides a pluggable component/theme marketplace for bloggers. Inspired by [notablog](https://github.com/dragonman225/notablog) but more flexible thanks to the power of Astro.
+Noblog fetches published Notion pages, converts their blocks to Markdown, and writes a complete blog structure with Astro frontmatter. It supports nested pages, custom output paths, and custom layout paths.
 
-## 🆚 Why Noblog vs notion-to-md?
+The renderer includes logic derived from [notion-to-md](https://github.com/souvikinator/notion-to-md), with additional handling for nested formatting and blog generation.
 
-While Noblog uses [notion-to-md](https://github.com/souvikinator/notion-to-md) under the hood, it provides significant improvements for blog generation:
+## Requirements
 
-### 🔧 **Enhanced Markdown Generation**
+- Node.js 24 or newer
+- A Notion integration with read access to your database
+- A Notion database with `publish` and `date` properties
 
-**Problem with notion-to-md:**
-When dealing with complex formatting like nested styles (e.g., `{BLOCK1}` and `{BLOCK2}` both bold, but only `BLOCK1` also italic), notion-to-md generates malformed markdown:
-
-```markdown
-_**BLOCK1**_**BLOCK2** # Broken: unmerged tags
-```
-
-**Noblog's Solution:**
-
-- **Merged Tag Handling**: Properly merges nested formatting tags
-- **Clean Markdown Output**: Generates valid, renderer-friendly markdown
-- **Astro-Optimized**: Specifically designed for static site generation
-
-### 🏗️ **Complete Blog Structure**
-
-**notion-to-md:** Just converts pages to markdown
-
-**Noblog:**
-
-- ✅ Automatic file structure generation
-- ✅ Parent/child page organization
-- ✅ Astro-compatible frontmatter
-- ✅ Customizable save paths
-- ✅ Layout path customization
-- ✅ Theme marketplace ready
-
-### ⚡ **One-Command Solution**
-
-Instead of manually handling notion-to-md output and building your own file structure:
-
-```bash
-# With Noblog - everything handled automatically
-noblog --layout ../../layouts/BlogLayout.astro
-
-# With notion-to-md - you'd need to build everything yourself
-```
-
-> **Note:** Noblog includes improvements to notion-to-md's core parsing logic, fixing edge cases like unmerged formatting tags that can break markdown renderers.
-
-## 🚀 Quick Start
-
-### Installation
+## Installation
 
 ```bash
 npm install -g noblog
 ```
 
-### Basic Usage
+For use as a library in another package:
 
 ```bash
-noblog
+npm install noblog
 ```
 
-That's it! Noblog will fetch your Notion content and generate static markdown files.
+## Configuration
 
-### 🛠️ Command-Line Options
-
-Noblog supports various command-line options to customize your blog generation:
+Set the following environment variables in your shell or in a `.env` file in the directory where you run `noblog`:
 
 ```bash
-# Basic usage with default settings
+NOTION_API_SECRET="your-notion-api-secret"
+NOBLOG_DATABASE_ID="your-notion-database-id"
+```
+
+The CLI loads `.env` automatically. Credentials are validated only when generating content, so `--help` and `--version` do not require them.
+
+## Usage
+
+```text
+noblog [generate] [options] [SAVE_PATH] [SUB_PATH]
+```
+
+Running `noblog` without arguments immediately generates content with the default settings. It does not print help.
+
+### Commands
+
+| Command | Description |
+| --- | --- |
+| `noblog` / `noblog generate` | Generate blog content |
+| `noblog help` | Show general help |
+| `noblog version` | Show the installed version |
+
+### Options
+
+| Option | Description |
+| --- | --- |
+| `-v, --verbose` | Print diagnostics and error stack traces |
+| `--layout PATH` | Set the layout path in generated frontmatter |
+| `-h, --help` | Show general or command-specific help |
+| `--version` | Show the installed version |
+| `--` | Treat all remaining inputs as positional paths |
+
+### Positional arguments
+
+| Argument | Default | Description |
+| --- | --- | --- |
+| `SAVE_PATH` | `./src/pages/posts/` | Directory for database posts |
+| `SUB_PATH` | `nob_children/` | Subdirectory **inside `SAVE_PATH`** for nested pages |
+
+### Examples
+
+```bash
+# Generate with all defaults
 noblog
 
-# Custom layout path
+# Equivalent explicit command
+noblog generate
+
+# Use a custom layout
 noblog --layout ../../layouts/BlogLayout.astro
 
-# Custom save and sub paths with layout
-noblog ./content/blog/ ./content/blog/subpages/ --layout ../../../layouts/CustomLayout.astro
+# Write database posts to ./content/blog/ and nested pages
+# to ./content/blog/subpages/
+noblog ./content/blog/ subpages/ --layout ../../layouts/CustomLayout.astro
 
-# Verbose output for debugging
-noblog -v
-# or
-noblog --verbose
+# Print diagnostics
+noblog generate -v
+
+# Show help for the generate command and its arguments
+noblog generate --help
 ```
 
-**Available Options:**
+## Output structure
 
-- `--layout PATH` - Custom layout path relative to the posts directory (default: `../../layouts/MarkdownPostLayout.astro`)
-- `-v, --verbose` - Print more messages for debugging
-- `-h, --help` - Show help message
-- `--version` - Show version information
+With the default paths, Noblog writes files named by Notion page ID:
 
-**Positional Arguments:**
-
-- `SAVE_PATH` - Directory to save main posts (default: `./src/pages/posts/`)
-- `SUB_PATH` - Subdirectory for nested content (default: `nob_children/`)
-
-## 📋 Setup Guide
-
-### 1. Create Your Notion Database
-
-Duplicate this [template database](https://www.notion.so/humbornjo/fa0faae85c504934a4a86cfa70302850?v=2abd1079ae134fbd8df2604765baa1df) and start writing your blog posts in Notion.
-
-### 2. Configure Environment Variables
-
-Set up your Notion API credentials:
-
-```bash
-export NOBLOG_DATABASE_ID="your-notion-database-id"
-export NOTION_API_SECRET="your-notion-api-secret"
-```
-
-### 3. Choose a Template
-
-Pick an Astro template that supports Noblog. Here's a starter template: **[nobloger](https://github.com/humbornjo/nobloger)**
-
-### 4. Deploy Your Site
-
-Run `noblog` to generate your content, then deploy your Astro site to your preferred hosting platform.
-
-## 📁 File Structure
-
-By default, Noblog organizes your content like this:
-
-```
+```text
 project-root/
 └── src/
     └── pages/
         └── posts/
-            ├── blog-post-1.md          # Direct database entries
-            ├── blog-post-2.md
+            ├── <database-page-id>.md
             └── nob_children/
-                ├── sub-post-1.md       # Referenced/child pages
-                ├── sub-post-2.md
-                └── sub-post-3.md
+                └── <nested-page-id>.md
 ```
 
-### Custom Save Paths
+Existing files with the same page IDs are overwritten. Other files in the output directories are left unchanged.
 
-You can customize the output directories:
+## Frontmatter
 
-```bash
-noblog <SAVE_PATH> <SUB_PATH>
+Generated files include Astro-compatible frontmatter:
 
-# Example:
-noblog ./content/blog/ ./content/blog/subpages/
-```
-
-## 🎯 Markdown Output
-
-Generated markdown files include Astro-compatible frontmatter:
-
-```markdown
+```yaml
 ---
 layout: ../../layouts/MarkdownPostLayout.astro
 title: "Your Blog Post Title"
-tags: ["tag1", "tag2", "tag3"]
-pubDate: 2024-01-24
-archived: false
 description: "Your post description here"
+tags: ["tag1", "tag2", "tag3"]
+pubDate: "2024-01-24"
+archived: "false"
 ---
-
-# Your content starts here...
 ```
 
-## 🔧 Requirements
+Nested pages receive a `../` prefix on their configured layout path.
 
-**Any Astro template can be used with Noblog!** The only requirement is that your template includes a layout component.
+## Programmatic API
 
-This means you can use:
+The package exposes a reusable renderer and filesystem writer. The optional Notion adapter is configured explicitly; importing `noblog` has no environment or network side effects.
 
-- ✅ Any existing Astro blog template
-- ✅ Your custom Astro theme
-- ✅ Popular Astro themes from the community
-- ✅ The starter template: **[nobloger](https://github.com/humbornjo/nobloger)**
+```ts
+import {
+  createNotionSource,
+  renderPages,
+  writePages,
+} from "noblog";
 
-### Layout Customization
+const notion = createNotionSource({
+  notionApiSecret: process.env.NOTION_API_SECRET!,
+  databaseId: process.env.NOBLOG_DATABASE_ID!,
+});
 
-By default, Noblog uses `../../layouts/MarkdownPostLayout.astro` as the layout path. You can customize this using the `--layout` option:
+const posts = await notion.listPages();
+const pages = await renderPages(posts, notion, {
+  layoutPath: "../../layouts/MarkdownPostLayout.astro",
+  subPath: "subpages/",
+});
+
+await writePages(pages, {
+  savePath: "./content/blog/",
+  subPath: "subpages/",
+});
+```
+
+`renderPages` recursively collects child pages by default and returns complete Markdown documents with frontmatter. Set `recursive: false` to render only the supplied database pages. `writePages` returns the paths it wrote.
+
+Use `renderPage` for a single page, or supply any implementation of the `NotionReader` interface instead of the built-in adapter. Lower-level helpers such as `renderRichText` and `renderFrontmatter` are exported as well. To customize a block, pass a `transformers` map in `RenderOptions`; return a string to override the default renderer or `undefined` to fall back to it. The programmatic API does not load `.env`; load environment variables yourself or pass explicit configuration.
+
+## Exit codes
+
+| Code | Meaning |
+| --- | --- |
+| `0` | Help, version, or successful generation |
+| `1` | Generation or unexpected runtime failure |
+| `2` | Invalid arguments or missing configuration |
+
+## Development
+
+Noblog uses [Stricli](https://bloomberg.github.io/stricli/) for typed command routing, [tsdown](https://tsdown.dev/) for CLI/library builds, and [Vitest](https://vitest.dev/) for tests.
 
 ```bash
-# Use a custom layout
-noblog --layout ../../layouts/BlogLayout.astro
+pnpm install
 
-# Use with custom save paths
-noblog ./content/blog/ ./content/blog/subpages/ --layout ../../../layouts/CustomLayout.astro
+# Run the TypeScript CLI directly
+pnpm dev --help
+
+# Run unit tests and type checking
+pnpm test
+pnpm typecheck
+
+# Build and smoke-test the actual dist artifacts
+pnpm test:built
+
+# Run the complete verification suite
+pnpm check
 ```
 
-**Important:** The layout path is relative to the posts directory where your markdown files are saved. For example:
-- If your save path is `./src/pages/posts/`, the default layout path `../../layouts/MarkdownPostLayout.astro` points to `./src/layouts/MarkdownPostLayout.astro`
-- If you change the save path to `./content/blog/`, you might need `--layout ../../layouts/CustomLayout.astro` to point to `./content/layouts/CustomLayout.astro`
+### Project structure
 
-Adjust the layout path based on where your Astro layout files are located relative to your posts directory.
+```text
+src/
+├── cli.ts                    # Process entry
+├── main.ts                   # Dotenv loading and dependency composition
+├── app.ts                    # Routes, help/version, and exit handling
+├── commands/
+│   ├── generate.ts           # Declarative arguments and documentation
+│   └── generate.impl.ts      # Lazy-loaded command action
+├── workflows/
+│   └── generate.ts           # CLI-oriented generation orchestration
+└── lib/
+    ├── noblog/               # Reusable rendering and file-writing package
+    │   ├── pages.ts          # Page collection, caching, and recursion
+    │   ├── blocks.ts         # Notion block-tree loading and rendering
+    │   ├── rich-text.ts      # Rich-text annotations and links
+    │   ├── markdown.ts       # Markdown formatting primitives
+    │   ├── frontmatter.ts    # Astro frontmatter
+    │   └── writer.ts         # Filesystem output
+    └── notion/client.ts      # Explicit Notion SDK adapter
+```
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
-Built upon the excellent work of these projects:
-
-- [Notion API](https://developers.notion.com/reference/intro) - Official Notion API documentation
-- [Notion SDK](https://developers.notion.com/docs/getting-started) - Notion's official SDK
-- [notion-to-md](https://github.com/souvikinator/notion-to-md) - Notion to Markdown converter
-- [notablog](https://github.com/dragonman225/notablog) - Original inspiration
-- [astro-notion-blog](https://github.com/otoyo/astro-notion-blog) - Astro + Notion integration
+- [Notion API](https://developers.notion.com/reference/intro) and [Notion SDK](https://github.com/makenotion/notion-sdk-js)
+- [notion-to-md](https://github.com/souvikinator/notion-to-md)
+- [notablog](https://github.com/dragonman225/notablog)
+- [astro-notion-blog](https://github.com/otoyo/astro-notion-blog)
+- [nobloger](https://github.com/humbornjo/nobloger), a starter Astro template
