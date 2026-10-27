@@ -12,7 +12,7 @@ interface TextOptions {
 export function text(
   content: string,
   options: TextOptions = {},
-): RichTextItemResponse {
+): Extract<RichTextItemResponse, { type: "text" }> {
   return {
     type: "text",
     text: { content, link: null },
@@ -30,7 +30,9 @@ export function text(
   };
 }
 
-export function equation(expression: string): RichTextItemResponse {
+export function equation(
+  expression: string,
+): Extract<RichTextItemResponse, { type: "equation" }> {
   return {
     type: "equation",
     equation: { expression },
@@ -47,29 +49,69 @@ export function equation(expression: string): RichTextItemResponse {
   };
 }
 
-export function block(
-  id: string,
-  type: string,
-  content: Record<string, unknown> = {},
-  hasChildren = false,
-): BlockObjectResponse {
+type BlockBase = Pick<
+  BlockObjectResponse,
+  | "parent"
+  | "object"
+  | "id"
+  | "created_time"
+  | "created_by"
+  | "last_edited_time"
+  | "last_edited_by"
+  | "has_children"
+  | "archived"
+  | "in_trash"
+>;
+
+export function blockBase(id: string, hasChildren = false): BlockBase {
   return {
+    parent: { type: "page_id", page_id: "parent" },
+    object: "block",
     id,
-    type,
+    created_time: "2024-01-01T00:00:00.000Z",
+    created_by: { object: "user", id: "user" },
+    last_edited_time: "2024-01-01T00:00:00.000Z",
+    last_edited_by: { object: "user", id: "user" },
     has_children: hasChildren,
-    ...content,
-  } as unknown as BlockObjectResponse;
+    archived: false,
+    in_trash: false,
+  };
+}
+
+export function block<Block extends BlockObjectResponse>(value: Block): Block {
+  return value;
 }
 
 export function page(
   id: string,
-  properties: Record<string, unknown> = {},
+  properties: PageObjectResponse["properties"] = {},
 ): PageObjectResponse {
-  return { id, properties } as unknown as PageObjectResponse;
+  return {
+    parent: { type: "database_id", database_id: "database" },
+    properties,
+    icon: null,
+    cover: null,
+    created_by: { object: "user", id: "user" },
+    last_edited_by: { object: "user", id: "user" },
+    is_locked: false,
+    object: "page",
+    id,
+    created_time: "2024-01-01T00:00:00.000Z",
+    last_edited_time: "2024-01-01T00:00:00.000Z",
+    archived: false,
+    in_trash: false,
+    url: `https://www.notion.so/${id}`,
+    public_url: null,
+  };
 }
 
-export function paragraph(id: string, content: string): BlockObjectResponse {
-  return block(id, "paragraph", {
-    paragraph: { rich_text: [text(content)] },
+export function paragraph(
+  id: string,
+  content: string,
+): Extract<BlockObjectResponse, { type: "paragraph" }> {
+  return block({
+    ...blockBase(id),
+    type: "paragraph",
+    paragraph: { rich_text: [text(content)], color: "default" },
   });
 }

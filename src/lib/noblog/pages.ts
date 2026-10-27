@@ -15,10 +15,10 @@ interface PageRenderContext {
   readonly reader: NotionReader;
   readonly databasePageIds: ReadonlySet<string>;
   readonly layoutPath: string;
-  readonly propertyMap?: NotionPropertyMap;
-  readonly frontmatter?: FrontmatterAdapter;
+  readonly propertyMap: NotionPropertyMap | undefined;
+  readonly frontmatter: FrontmatterAdapter | undefined;
   readonly recursive: boolean;
-  readonly transformers?: BlockTransformers;
+  readonly transformers: BlockTransformers | undefined;
   readonly renderedPages: Map<string, Promise<RenderedPage>>;
 }
 
@@ -98,12 +98,18 @@ async function renderSinglePage(
   ]);
   const rendered = await renderBlockTree(blockTree, {
     pageId,
-    transformers: context.transformers,
+    ...(context.transformers !== undefined
+      ? { transformers: context.transformers }
+      : {}),
   });
   const frontmatter = renderFrontmatter(page, {
     layoutPath: context.layoutPath,
-    propertyMap: context.propertyMap,
-    frontmatter: context.frontmatter,
+    ...(context.propertyMap !== undefined
+      ? { propertyMap: context.propertyMap }
+      : {}),
+    ...(context.frontmatter !== undefined
+      ? { frontmatter: context.frontmatter }
+      : {}),
     isDatabasePage: context.databasePageIds.has(pageId),
   });
 

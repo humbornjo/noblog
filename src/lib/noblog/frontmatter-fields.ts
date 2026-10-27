@@ -2,7 +2,7 @@ import type {
   FrontmatterField,
   FrontmatterFields,
 } from "./config.js";
-import type { FrontmatterAdapter } from "./types.js";
+import type { FrontmatterAdapter, FrontmatterValue } from "./types.js";
 
 export const DEFAULT_FRONTMATTER_FIELDS: FrontmatterFields = {
   layout: { from: "layoutPath" },
@@ -25,13 +25,13 @@ export function createFrontmatterAdapter(
   }
 
   return ({ page, metadata, layoutPath, isDatabasePage }) => {
-    const sources: Record<string, unknown> = {
+    const sources: Record<string, FrontmatterValue | undefined> = {
       ...metadata.values,
       layoutPath,
       pageId: page.id,
       isDatabasePage,
     };
-    const output: Record<string, unknown> = {};
+    const output: Record<string, FrontmatterValue | undefined> = {};
 
     for (const [name, field] of Object.entries(fields)) {
       let value =
@@ -57,11 +57,11 @@ export function createFrontmatterAdapter(
 }
 
 function convertValue(
-  value: unknown,
+  value: FrontmatterValue | undefined,
   field: FrontmatterField,
   name: string,
   pageId: string,
-): unknown {
+): FrontmatterValue | undefined {
   if (!field.as || isEmpty(value)) return value;
 
   if (field.as === "string") {
@@ -94,7 +94,7 @@ function conversionError(
   );
 }
 
-function isEmpty(value: unknown): boolean {
+function isEmpty(value: FrontmatterValue | undefined): boolean {
   return (
     value === undefined ||
     value === null ||

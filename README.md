@@ -247,10 +247,13 @@ import {
   writePages,
 } from "noblog";
 
-const notion = createNotionSource({
-  notionApiSecret: process.env.NOTION_API_SECRET!,
-  databaseId: process.env.NOBLOG_DATABASE_ID!,
-});
+const notionApiSecret = process.env["NOTION_API_SECRET"];
+const databaseId = process.env["NOBLOG_DATABASE_ID"];
+if (!notionApiSecret || !databaseId) {
+  throw new Error("Notion credentials are required");
+}
+
+const notion = createNotionSource({ notionApiSecret, databaseId });
 
 const savePath = "./content/blog/";
 const storePath = ".noblog/pages/";
@@ -268,7 +271,7 @@ await writePages(pages, { savePath, storePath });
 
 `renderPages` recursively collects child pages by default and returns complete Markdown documents with frontmatter. Set `recursive: false` to render only the supplied database pages. `writePages` writes every canonical file but returns only the public database-post view paths. When rendering for a canonical store, use `resolveStoreLayoutPath` as above so layout imports remain valid after symlink resolution.
 
-Use `renderPage` for a single page, or supply any implementation of the `NotionReader` interface instead of the built-in adapter. Lower-level helpers such as `renderRichText` and `renderFrontmatter` are exported as well. To customize a block, pass a `transformers` map in `RenderOptions`; return a string to override the default renderer or `undefined` to fall back to it. The programmatic API does not load `.env`; load environment variables yourself or pass explicit configuration.
+Use `renderPage` for a single page, or supply any implementation of the `NotionReader` interface instead of the built-in adapter. Lower-level helpers such as `renderRichText` and `renderFrontmatter` are exported as well. To customize a block, pass a `transformers` map in `RenderOptions`; return a string to override the default renderer or `undefined` to fall back to it. Each key narrows its handler's block payload to the corresponding Notion block type, so a `paragraph` transformer can access `block.paragraph` directly. The programmatic API does not load `.env`; load environment variables yourself or pass explicit configuration.
 
 The same declarative mapping is available programmatically, or you can provide a `FrontmatterAdapter` function for full control:
 
@@ -288,7 +291,7 @@ const pages = await renderPages(posts, notion, {
 });
 ```
 
-An adapter receives `{ page, metadata, layoutPath, isDatabasePage }` and returns a plain object. It can use the raw Notion page or normalized metadata, and root `undefined` values are omitted. Arrays, null, dates, and class instances are rejected as adapter roots.
+An adapter receives `{ page, metadata, layoutPath, isDatabasePage }` and returns a plain object. It can use the raw Notion page or normalized metadata, and root `undefined` values are omitted. Values follow the exported `FrontmatterValue` contract: strings, numbers, booleans, `null`, `Date`, and readonly arrays/objects containing those values. Arrays, null, dates, and class instances are rejected as adapter roots.
 
 ## Exit codes
 

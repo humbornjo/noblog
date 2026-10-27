@@ -55,7 +55,9 @@ async function listPages(
           },
           sorts: [{ property: "date", direction: "descending" }],
           page_size: 100,
-          start_cursor: startCursor,
+          ...(startCursor !== undefined
+            ? { start_cursor: startCursor }
+            : {}),
         }),
       );
       pages.push(...response.results.filter(isFullPage));
@@ -90,7 +92,7 @@ async function getBlockChildren(
       client.blocks.children.list({
         block_id: blockId,
         page_size: 100,
-        start_cursor: startCursor,
+        ...(startCursor !== undefined ? { start_cursor: startCursor } : {}),
       }),
     );
     blocks.push(...response.results.filter(isFullBlock));

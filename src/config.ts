@@ -13,8 +13,8 @@ export class ConfigurationError extends Error {
 export function loadConfig(
   env: Readonly<Partial<Record<string, string>>> = {},
 ): NoblogConfig {
-  const notionApiSecret = env.NOTION_API_SECRET;
-  const databaseId = env.NOBLOG_DATABASE_ID;
+  const notionApiSecret = env["NOTION_API_SECRET"];
+  const databaseId = env["NOBLOG_DATABASE_ID"];
   const missing = [
     ["NOTION_API_SECRET", notionApiSecret],
     ["NOBLOG_DATABASE_ID", databaseId],

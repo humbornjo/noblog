@@ -3,7 +3,7 @@ import { stringify } from "yaml";
 import type { NotionPropertyMap } from "./config.js";
 import { DEFAULT_LAYOUT_PATH } from "./defaults.js";
 import { extractPageMetadata } from "./metadata.js";
-import type { FrontmatterAdapter } from "./types.js";
+import type { FrontmatterAdapter, FrontmatterRecord } from "./types.js";
 
 export interface FrontmatterOptions {
   readonly layoutPath?: string;
@@ -74,7 +74,7 @@ export function renderFrontmatter(
   );
 }
 
-function serializeFrontmatter(values: Readonly<Record<string, unknown>>): string {
+function serializeFrontmatter(values: FrontmatterRecord): string {
   if (
     values === null ||
     typeof values !== "object" ||

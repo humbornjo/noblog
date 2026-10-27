@@ -34,9 +34,8 @@ export function renderRichText(
   let rendered = "";
   let active: AnnotationFormat[] = [];
 
-  for (let index = 0; index < richText.length; index++) {
-    const item = richText[index]!;
-    const desired = getAnnotationFormats(richText, index);
+  for (const [index, item] of richText.entries()) {
+    const desired = getAnnotationFormats(richText, index, item);
     let shared = 0;
     while (
       shared < active.length &&
@@ -46,19 +45,19 @@ export function renderRichText(
       shared++;
     }
 
-    for (let marker = active.length - 1; marker >= shared; marker--) {
-      rendered += active[marker]!.close;
+    for (const format of active.slice(shared).toReversed()) {
+      rendered += format.close;
     }
-    for (let marker = shared; marker < desired.length; marker++) {
-      rendered += desired[marker]!.open;
+    for (const format of desired.slice(shared)) {
+      rendered += format.open;
     }
 
     rendered += renderContent(item);
     active = desired;
   }
 
-  for (let marker = active.length - 1; marker >= 0; marker--) {
-    rendered += active[marker]!.close;
+  for (const format of active.toReversed()) {
+    rendered += format.close;
   }
   return rendered;
 }
@@ -66,8 +65,8 @@ export function renderRichText(
 function getAnnotationFormats(
   richText: readonly RichTextItemResponse[],
   index: number,
+  item: RichTextItemResponse,
 ): AnnotationFormat[] {
-  const item = richText[index]!;
   if (item.type === "equation") return [];
 
   return ANNOTATION_FORMATS.filter((format) => item.annotations[format.name])
@@ -85,10 +84,9 @@ function getAnnotationRunEnd(
   name: AnnotationName,
 ): number {
   let end = start;
-  while (end + 1 < richText.length) {
-    const next = richText[end + 1]!;
+  for (const [offset, next] of richText.slice(start + 1).entries()) {
     if (next.type === "equation" || !next.annotations[name]) break;
-    end++;
+    end = start + offset + 1;
   }
   return end;
 }

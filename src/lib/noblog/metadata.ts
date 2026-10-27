@@ -12,10 +12,10 @@ export type MetadataValue =
 
 export interface PageMetadata {
   readonly title: string;
-  readonly description?: string;
+  readonly description?: string | undefined;
   readonly tags: readonly string[];
-  readonly publishedAt?: string;
-  readonly archived?: boolean;
+  readonly publishedAt?: string | undefined;
+  readonly archived?: boolean | undefined;
   readonly values: Readonly<Record<string, MetadataValue>>;
 }
 
@@ -40,18 +40,18 @@ export function extractPageMetadata(
     const titleProperty = Object.values(page.properties).findLast(
       (property) => property.type === "title",
     );
-    values.title = normalizeProperty(titleProperty);
+    values["title"] = normalizeProperty(titleProperty);
   }
   for (const [key, name] of propertyNames) {
     values[key] = normalizeProperty(page.properties[name]);
   }
 
   return {
-    title: asString(values.title) ?? "",
-    description: asString(values.description),
-    tags: asStringArray(values.tags) ?? [],
-    publishedAt: asString(values.publishedAt),
-    archived: asBoolean(values.archived),
+    title: asString(values["title"]) ?? "",
+    description: asString(values["description"]),
+    tags: asStringArray(values["tags"]) ?? [],
+    publishedAt: asString(values["publishedAt"]),
+    archived: asBoolean(values["archived"]),
     values,
   };
 }

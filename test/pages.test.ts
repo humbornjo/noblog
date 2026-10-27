@@ -5,21 +5,27 @@ import type {
 } from "@notionhq/client";
 import { renderPage, renderPages } from "../src/lib/noblog/pages.js";
 import type { NotionReader } from "../src/lib/noblog/types.js";
-import { block, page, paragraph, text } from "./fixtures.js";
+import { block, blockBase, page, paragraph, text } from "./fixtures.js";
 
-function properties(title: string): Record<string, unknown> {
+function properties(title: string): PageObjectResponse["properties"] {
   return {
-    Name: { type: "title", title: [text(title)] },
+    Name: { id: "title", type: "title", title: [text(title)] },
     description: {
+      id: "description",
       type: "rich_text",
       rich_text: [text(`${title} description`)],
     },
     tags: {
+      id: "tags",
       type: "multi_select",
-      multi_select: [{ name: "tag" }],
+      multi_select: [{ id: "tag", name: "tag", color: "default" }],
     },
-    date: { type: "date", date: { start: "2024-01-24" } },
-    archived: { type: "checkbox", checkbox: false },
+    date: {
+      id: "date",
+      type: "date",
+      date: { start: "2024-01-24", end: null, time_zone: null },
+    },
+    archived: { id: "archived", type: "checkbox", checkbox: false },
   };
 }
 
@@ -27,12 +33,14 @@ function readerFor(
   pages: ReadonlyMap<string, PageObjectResponse>,
   blocks: Readonly<Record<string, BlockObjectResponse[]>>,
 ) {
-  const getPage = vi.fn(async (id: string) => {
+  const getPage = vi.fn<NotionReader["getPage"]>(async (id) => {
     const result = pages.get(id);
     if (!result) throw new Error(`Missing page fixture: ${id}`);
     return result;
   });
-  const getBlockChildren = vi.fn(async (id: string) => blocks[id] ?? []);
+  const getBlockChildren = vi.fn<NotionReader["getBlockChildren"]>(
+    async (id) => blocks[id] ?? [],
+  );
   const reader: NotionReader = { getPage, getBlockChildren };
   return { reader, getPage, getBlockChildren };
 }
@@ -47,11 +55,19 @@ function createFixture() {
   const blocks = {
     root: [
       paragraph("body", "Root body"),
-      block("child", "child_page", { child_page: { title: "Child" } }),
+      block({
+        ...blockBase("child"),
+        type: "child_page",
+        child_page: { title: "Child" },
+      }),
     ],
     child: [
       paragraph("nested-body", "Nested body"),
-      block("root", "child_page", { child_page: { title: "Root" } }),
+      block({
+        ...blockBase("root"),
+        type: "child_page",
+        child_page: { title: "Root" },
+      }),
     ],
   };
   return { root, child, ...readerFor(pages, blocks) };

@@ -19,8 +19,8 @@ export interface GenerateOptions {
 }
 
 export interface GenerateOutput {
-  stdout: { write(chunk: string): unknown };
-  stderr: { write(chunk: string): unknown };
+  stdout: { write(chunk: string): void };
+  stderr: { write(chunk: string): void };
 }
 
 export async function generateBlog(
@@ -49,8 +49,12 @@ export async function generateBlog(
   const pages = await renderPages(posts, notion, {
     layoutPath: storeLayoutPath,
     recursive: options.recursive,
-    propertyMap: options.propertyMap,
-    frontmatter: options.frontmatter,
+    ...(options.propertyMap !== undefined
+      ? { propertyMap: options.propertyMap }
+      : {}),
+    ...(options.frontmatter !== undefined
+      ? { frontmatter: options.frontmatter }
+      : {}),
   });
   await writePages(pages, {
     savePath: options.savePath,

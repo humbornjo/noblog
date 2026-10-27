@@ -8,7 +8,7 @@ import type {
   BlockRenderContext,
 } from "../src/lib/noblog/blocks.js";
 import type { NotionReader } from "../src/lib/noblog/types.js";
-import { block, paragraph, text } from "./fixtures.js";
+import { block, blockBase, paragraph, text } from "./fixtures.js";
 
 const context: BlockRenderContext = {
   pageId: "root",
@@ -17,9 +17,11 @@ const context: BlockRenderContext = {
 function readerFor(
   blocks: Readonly<Record<string, BlockObjectResponse[]>>,
 ) {
-  const getBlockChildren = vi.fn(async (id: string) => blocks[id] ?? []);
+  const getBlockChildren = vi.fn<NotionReader["getBlockChildren"]>(
+    async (id) => blocks[id] ?? [],
+  );
   const reader: NotionReader = {
-    getPage: vi.fn(async () => {
+    getPage: vi.fn<NotionReader["getPage"]>(async () => {
       throw new Error("Not used by block rendering");
     }),
     getBlockChildren,
@@ -31,31 +33,51 @@ describe("block tree rendering", () => {
   it("renders nested content and derives numbered-list positions", async () => {
     const { reader, getBlockChildren } = readerFor({
       root: [
-        block(
-          "toggle",
-          "toggle",
-          { toggle: { rich_text: [text("More")] } },
-          true,
-        ),
-        block(
-          "first",
-          "numbered_list_item",
-          { numbered_list_item: { rich_text: [text("one")] } },
-          true,
-        ),
-        block("second", "numbered_list_item", {
-          numbered_list_item: { rich_text: [text("two")] },
+        block({
+          ...blockBase("toggle", true),
+          type: "toggle",
+          toggle: { rich_text: [text("More")], color: "default" },
+        }),
+        block({
+          ...blockBase("first", true),
+          type: "numbered_list_item",
+          numbered_list_item: {
+            rich_text: [text("one")],
+            color: "default",
+          },
+        }),
+        block({
+          ...blockBase("second"),
+          type: "numbered_list_item",
+          numbered_list_item: {
+            rich_text: [text("two")],
+            color: "default",
+          },
         }),
         paragraph("reset", "reset"),
-        block("third", "numbered_list_item", {
-          numbered_list_item: { rich_text: [text("three")] },
+        block({
+          ...blockBase("third"),
+          type: "numbered_list_item",
+          numbered_list_item: {
+            rich_text: [text("three")],
+            color: "default",
+          },
         }),
-        block("ignored", "unsupported", { unsupported: {} }),
+        block({
+          ...blockBase("ignored"),
+          type: "unsupported",
+          unsupported: {},
+        }),
       ],
       toggle: [paragraph("inside", "Inside")],
       first: [
-        block("subitem", "bulleted_list_item", {
-          bulleted_list_item: { rich_text: [text("sub")] },
+        block({
+          ...blockBase("subitem"),
+          type: "bulleted_list_item",
+          bulleted_list_item: {
+            rich_text: [text("sub")],
+            color: "default",
+          },
         }),
       ],
     });
@@ -77,17 +99,15 @@ describe("block tree rendering", () => {
   it("fetches callout children once and includes them in the callout", async () => {
     const { reader, getBlockChildren } = readerFor({
       root: [
-        block(
-          "callout",
-          "callout",
-          {
-            callout: {
-              rich_text: [text("Note")],
-              icon: { type: "emoji", emoji: "💡" },
-            },
+        block({
+          ...blockBase("callout", true),
+          type: "callout",
+          callout: {
+            rich_text: [text("Note")],
+            icon: { type: "emoji", emoji: "💡" },
+            color: "default",
           },
-          true,
-        ),
+        }),
       ],
       callout: [paragraph("detail", "Details")],
     });
@@ -115,24 +135,25 @@ describe("block tree rendering", () => {
     async ({ hasColumnHeader, expected }) => {
       const { reader } = readerFor({
         root: [
-          block(
-            "table",
-            "table",
-            {
-              table: {
-                table_width: 2,
-                has_column_header: hasColumnHeader,
-                has_row_header: false,
-              },
+          block({
+            ...blockBase("table", true),
+            type: "table",
+            table: {
+              table_width: 2,
+              has_column_header: hasColumnHeader,
+              has_row_header: false,
             },
-            true,
-          ),
+          }),
         ],
         table: [
-          block("first-row", "table_row", {
+          block({
+            ...blockBase("first-row"),
+            type: "table_row",
             table_row: { cells: [[text("a")], [text("b")]] },
           }),
-          block("second-row", "table_row", {
+          block({
+            ...blockBase("second-row"),
+            type: "table_row",
             table_row: { cells: [[text("c")], [text("d")]] },
           }),
         ],
@@ -148,7 +169,11 @@ describe("block tree rendering", () => {
   it("links child pages to sibling canonical Markdown files", async () => {
     const { reader } = readerFor({
       root: [
-        block("child", "child_page", { child_page: { title: "Child" } }),
+        block({
+          ...blockBase("child"),
+          type: "child_page",
+          child_page: { title: "Child" },
+        }),
       ],
     });
 
@@ -167,6 +192,7 @@ describe("block tree rendering", () => {
         transformers: {
           paragraph: (block, transformerContext) => {
             expect(block.id).toBe("paragraph");
+            expect(block.paragraph.rich_text).toHaveLength(1);
             expect(transformerContext.pageId).toBe("root");
             return "Custom";
           },

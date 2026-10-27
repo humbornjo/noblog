@@ -1,15 +1,23 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { generateBlog } from "../src/workflows/generate.js";
+import type { GenerateOutput } from "../src/workflows/generate.js";
+import type {
+  createNotionSource,
+  NotionSource,
+} from "../src/lib/notion/client.js";
+import type { renderPages } from "../src/lib/noblog/pages.js";
+import type { writePages } from "../src/lib/noblog/writer.js";
+import { page } from "./fixtures.js";
 
 const mocks = vi.hoisted(() => ({
-  createNotionSource: vi.fn(),
+  createNotionSource: vi.fn<typeof createNotionSource>(),
   notion: {
-    listPages: vi.fn(),
-    getPage: vi.fn(),
-    getBlockChildren: vi.fn(),
+    listPages: vi.fn<NotionSource["listPages"]>(),
+    getPage: vi.fn<NotionSource["getPage"]>(),
+    getBlockChildren: vi.fn<NotionSource["getBlockChildren"]>(),
   },
-  renderPages: vi.fn(),
-  writePages: vi.fn(),
+  renderPages: vi.fn<typeof renderPages>(),
+  writePages: vi.fn<typeof writePages>(),
 }));
 
 vi.mock("../src/lib/notion/client.js", () => ({
@@ -49,8 +57,8 @@ describe("generateBlog", () => {
       verbose: false,
     };
     const output = {
-      stdout: { write: vi.fn() },
-      stderr: { write: vi.fn() },
+      stdout: { write: vi.fn<GenerateOutput["stdout"]["write"]>() },
+      stderr: { write: vi.fn<GenerateOutput["stderr"]["write"]>() },
     };
 
     await generateBlog(config, options, output);
@@ -73,10 +81,10 @@ describe("generateBlog", () => {
   });
 
   it("writes diagnostics to stderr in verbose mode", async () => {
-    mocks.notion.listPages.mockResolvedValue([{ id: "page" }]);
+    mocks.notion.listPages.mockResolvedValue([page("page")]);
     const output = {
-      stdout: { write: vi.fn() },
-      stderr: { write: vi.fn() },
+      stdout: { write: vi.fn<GenerateOutput["stdout"]["write"]>() },
+      stderr: { write: vi.fn<GenerateOutput["stderr"]["write"]>() },
     };
 
     await generateBlog(

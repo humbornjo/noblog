@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import { parse } from "yaml";
 import { z } from "zod";
 import { ConfigurationError } from "./config.js";
+import { getErrorCode } from "./lib/errors.js";
 import {
   noblogConfigSchema,
   type NoblogFileConfig,
@@ -15,7 +16,7 @@ export async function loadNoblogConfig(
     source = await readFile(path, "utf8");
   } catch (error) {
     const detail =
-      (error as NodeJS.ErrnoException).code === "ENOENT"
+      getErrorCode(error) === "ENOENT"
         ? "file not found"
         : error instanceof Error
           ? error.message

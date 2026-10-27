@@ -6,6 +6,7 @@ import { lstat, readFile, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
+import packageJson from "../package.json" with { type: "json" };
 
 const cwd = mkdtempSync(join(tmpdir(), "noblog-smoke-"));
 process.on("exit", () => {
@@ -14,15 +15,82 @@ process.on("exit", () => {
 
 const cli = fileURLToPath(new URL("../dist/generate.js", import.meta.url));
 const libraryUrl = new URL("../dist/index.js", import.meta.url);
-const packageJson = JSON.parse(
-  await readFile(new URL("../package.json", import.meta.url), "utf8"),
-);
 
+/**
+ * @param {unknown} value
+ * @returns {value is Record<string, unknown>}
+ */
+function isRecord(value) {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+/**
+ * @param {unknown} value
+ * @param {string} label
+ * @returns {Record<string, unknown>}
+ */
+function requireRecord(value, label) {
+  if (!isRecord(value)) throw new TypeError(`${label} must be an object`);
+  return value;
+}
+
+/**
+ * @param {unknown} value
+ * @returns {value is unknown[]}
+ */
+function isUnknownArray(value) {
+  return Array.isArray(value);
+}
+
+/**
+ * @param {unknown} value
+ * @param {string} label
+ * @returns {unknown[]}
+ */
+function requireArray(value, label) {
+  if (!isUnknownArray(value)) throw new TypeError(`${label} must be an array`);
+  return value;
+}
+
+/**
+ * @param {unknown} value
+ * @param {string} label
+ * @returns {string}
+ */
+function requireString(value, label) {
+  if (typeof value !== "string") {
+    throw new TypeError(`${label} must be a string`);
+  }
+  return value;
+}
+
+/**
+ * @param {unknown} value
+ * @returns {value is (...args: unknown[]) => unknown}
+ */
+function isFunction(value) {
+  return typeof value === "function";
+}
+
+/**
+ * @param {Record<string, unknown>} record
+ * @param {string} name
+ * @returns {(...args: unknown[]) => unknown}
+ */
+function requireFunction(record, name) {
+  const value = record[name];
+  if (!isFunction(value)) {
+    throw new TypeError(`${name} must be a function`);
+  }
+  return value;
+}
+
+/** @param {...string} args */
 function run(...args) {
   return spawnSync(process.execPath, [cli, ...args], {
     cwd,
     encoding: "utf8",
-    env: { PATH: process.env.PATH, STRICLI_NO_COLOR: "1" },
+    env: { PATH: process.env["PATH"], STRICLI_NO_COLOR: "1" },
   });
 }
 
@@ -62,40 +130,48 @@ assert.match(invalidConfig.stderr, /Invalid Noblog config/);
 const executable = await stat(cli);
 assert.notEqual(executable.mode & 0o111, 0, "CLI must be executable");
 
-const library = await import(libraryUrl.href);
-assert.equal(typeof library.renderPage, "function");
-assert.equal(typeof library.renderPages, "function");
-assert.equal(typeof library.writePages, "function");
-assert.equal(typeof library.createNotionSource, "function");
-assert.equal(typeof library.resolveStoreLayoutPath, "function");
-assert.equal(typeof library.createFrontmatterAdapter, "function");
+const library = requireRecord(
+  await import(libraryUrl.href),
+  "Built library export",
+);
+requireFunction(library, "renderPage");
+requireFunction(library, "renderPages");
+requireFunction(library, "writePages");
+requireFunction(library, "createNotionSource");
+requireFunction(library, "resolveStoreLayoutPath");
+requireFunction(library, "createFrontmatterAdapter");
 assert.equal("generateBlog" in library, false);
 
-const viewPaths = await library.writePages(
-  [
+const writeBuiltPages = requireFunction(library, "writePages");
+const viewPaths = requireArray(
+  await writeBuiltPages(
+    [
+      {
+        id: "root",
+        content: "# Root\n",
+        childPageIds: ["child"],
+        isDatabasePage: true,
+      },
+      {
+        id: "child",
+        content: "# Child\n",
+        childPageIds: [],
+        isDatabasePage: false,
+      },
+    ],
     {
-      id: "root",
-      content: "# Root\n",
-      childPageIds: ["child"],
-      isDatabasePage: true,
+      savePath: join(cwd, "views"),
+      storePath: join(cwd, "store"),
     },
-    {
-      id: "child",
-      content: "# Child\n",
-      childPageIds: [],
-      isDatabasePage: false,
-    },
-  ],
-  {
-    savePath: join(cwd, "views"),
-    storePath: join(cwd, "store"),
-  },
+  ),
+  "writePages result",
 );
 assert.equal(viewPaths.length, 1);
+const viewPath = requireString(viewPaths[0], "writePages view path");
 assert.equal((await lstat(join(cwd, "store", "root.md"))).isFile(), true);
 assert.equal((await lstat(join(cwd, "store", "child.md"))).isFile(), true);
-assert.equal((await lstat(viewPaths[0])).isSymbolicLink(), true);
-assert.equal(await readFile(viewPaths[0], "utf8"), "# Root\n");
+assert.equal((await lstat(viewPath)).isSymbolicLink(), true);
+assert.equal(await readFile(viewPath, "utf8"), "# Root\n");
 await assert.rejects(lstat(join(cwd, "views", "child.md")), {
   code: "ENOENT",
 });
@@ -103,11 +179,22 @@ await assert.rejects(lstat(join(cwd, "views", "nob_children", "child.md")), {
   code: "ENOENT",
 });
 
-const require = createRequire(import.meta.url);
-const commonjs = require("noblog");
-assert.equal(typeof commonjs.renderPages, "function");
-const configSchema = require("noblog/config.schema.json");
-assert.equal(configSchema.properties.version.const, 1);
+const requireFromHere = createRequire(import.meta.url);
+const commonjs = requireRecord(requireFromHere("noblog"), "CommonJS export");
+requireFunction(commonjs, "renderPages");
+const configSchema = requireRecord(
+  requireFromHere("noblog/config.schema.json"),
+  "Published config schema",
+);
+const schemaProperties = requireRecord(
+  configSchema["properties"],
+  "Config schema properties",
+);
+const versionSchema = requireRecord(
+  schemaProperties["version"],
+  "Config schema version",
+);
+assert.equal(versionSchema["const"], 1);
 
 const declarations = await readFile(
   new URL("../dist/index.d.ts", import.meta.url),

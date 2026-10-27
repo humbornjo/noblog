@@ -102,7 +102,7 @@ describe("Noblog YAML config schema", () => {
   );
 
   it("keeps the published JSON Schema in sync with the runtime schema", async () => {
-    const published = JSON.parse(
+    const published: unknown = JSON.parse(
       await readFile(new URL("../schema/config.json", import.meta.url), "utf8"),
     );
 

@@ -1,28 +1,41 @@
 import { describe, expect, it } from "vitest";
 import { parse } from "yaml";
+import type { PageObjectResponse } from "@notionhq/client";
 import type { FrontmatterFields } from "../src/lib/noblog/config.js";
 import { createFrontmatterAdapter } from "../src/lib/noblog/frontmatter-fields.js";
 import { renderFrontmatter } from "../src/lib/noblog/frontmatter.js";
 import { page, text } from "./fixtures.js";
 
-function properties() {
+function properties(): PageObjectResponse["properties"] {
   return {
-    Name: { type: "title", title: [text("Post")] },
-    description: { type: "rich_text", rich_text: [] },
+    Name: { id: "title", type: "title", title: [text("Post")] },
+    description: { id: "description", type: "rich_text", rich_text: [] },
     tags: {
+      id: "tags",
       type: "multi_select",
-      multi_select: [{ name: "blog" }, { name: "typescript" }],
+      multi_select: [
+        { id: "blog", name: "blog", color: "default" },
+        { id: "typescript", name: "typescript", color: "default" },
+      ],
     },
-    date: { type: "date", date: { start: "2024-01-24" } },
-    archived: { type: "checkbox", checkbox: false },
-    Series: { type: "rich_text", rich_text: [text("Notes")] },
-    Sensitive: { type: "checkbox", checkbox: true },
-    Priority: { type: "number", number: 0 },
+    date: {
+      id: "date",
+      type: "date",
+      date: { start: "2024-01-24", end: null, time_zone: null },
+    },
+    archived: { id: "archived", type: "checkbox", checkbox: false },
+    Series: {
+      id: "series",
+      type: "rich_text",
+      rich_text: [text("Notes")],
+    },
+    Sensitive: { id: "sensitive", type: "checkbox", checkbox: true },
+    Priority: { id: "priority", type: "number", number: 0 },
   };
 }
 
-function parseFrontmatter(rendered: string): Record<string, unknown> {
-  return parse(rendered.slice(4, -4)) as Record<string, unknown>;
+function parseFrontmatter(rendered: string): unknown {
+  return parse(rendered.slice(4, -4));
 }
 
 describe("declarative frontmatter", () => {
@@ -113,8 +126,12 @@ describe("declarative frontmatter", () => {
     expect(() =>
       renderFrontmatter(
         page("date-page", {
-          Name: { type: "title", title: [text("Post")] },
-          date: { type: "date", date: { start: "not-a-date" } },
+          Name: { id: "title", type: "title", title: [text("Post")] },
+          date: {
+            id: "date",
+            type: "date",
+            date: { start: "not-a-date", end: null, time_zone: null },
+          },
         }),
         {
           frontmatter: createFrontmatterAdapter({
@@ -140,7 +157,8 @@ describe("declarative frontmatter", () => {
     });
     expect(() =>
       renderFrontmatter(page("page", properties()), {
-        frontmatter: () => [] as unknown as Record<string, unknown>,
+        // @ts-expect-error Intentionally violate FrontmatterRecord to test the runtime root guard.
+        frontmatter: () => [],
       }),
     ).toThrow("Frontmatter adapter must return a plain object");
   });

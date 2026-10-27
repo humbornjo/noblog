@@ -82,12 +82,14 @@ export async function runCli(
     // skip later ones; escaped words and flag values remain positional data.
     const remainingInputs: string[] = [];
     for (let index = 0; index < commandInputs.length; index++) {
-      const input = commandInputs[index]!;
+      const input = commandInputs[index];
+      if (input === undefined) continue;
       if (input === "generate" && index !== 0) continue;
 
       remainingInputs.push(input);
-      if (PATH_FLAGS.has(input) && hasFlagValue(commandInputs, index)) {
-        remainingInputs.push(commandInputs[index + 1]!);
+      const flagValue = getFlagValue(commandInputs, index);
+      if (PATH_FLAGS.has(input) && flagValue !== undefined) {
+        remainingInputs.push(flagValue);
         index++;
       }
     }
@@ -121,8 +123,12 @@ function hasLegacyControl(
   control: "help" | "version" | "--version",
 ): boolean {
   for (let index = 0; index < inputs.length; index++) {
-    const input = inputs[index]!;
-    if (PATH_FLAGS.has(input) && hasFlagValue(inputs, index)) {
+    const input = inputs[index];
+    if (input === undefined) continue;
+    if (
+      PATH_FLAGS.has(input) &&
+      getFlagValue(inputs, index) !== undefined
+    ) {
       index++;
       continue;
     }
@@ -131,7 +137,10 @@ function hasLegacyControl(
   return false;
 }
 
-function hasFlagValue(inputs: readonly string[], flagIndex: number): boolean {
+function getFlagValue(
+  inputs: readonly string[],
+  flagIndex: number,
+): string | undefined {
   const value = inputs[flagIndex + 1];
-  return value !== undefined && !value.startsWith("-");
+  return value !== undefined && !value.startsWith("-") ? value : undefined;
 }

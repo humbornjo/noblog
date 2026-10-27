@@ -24,8 +24,11 @@ describe("loadConfig", () => {
     }
 
     expect(error).toBeInstanceOf(ConfigurationError);
+    if (!(error instanceof ConfigurationError)) {
+      throw new TypeError("Expected loadConfig to throw ConfigurationError");
+    }
     for (const name of missing) {
-      expect((error as Error).message).toContain(name);
+      expect(error.message).toContain(name);
     }
   });
 });

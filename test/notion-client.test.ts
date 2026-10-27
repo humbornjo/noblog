@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createNotionSource } from "../src/lib/notion/client.js";
+import { page } from "./fixtures.js";
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -16,12 +17,7 @@ function errorResponse(status: number, code: string): Response {
 }
 
 function pageResponse(): Response {
-  return jsonResponse({
-    id: "page",
-    object: "page",
-    url: "https://www.notion.so/page",
-    properties: {},
-  });
+  return jsonResponse(page("page"));
 }
 
 function source() {
@@ -40,7 +36,7 @@ describe("Notion request retries", () => {
   it("does not retry permanent API errors after the caller rejects", async () => {
     vi.useFakeTimers();
     const fetchMock = vi
-      .fn()
+      .fn<typeof fetch>()
       .mockImplementation(async () => errorResponse(400, "invalid_request"));
     vi.stubGlobal("fetch", fetchMock);
 
@@ -56,7 +52,7 @@ describe("Notion request retries", () => {
   it("waits for transient HTTP failures and returns a later success", async () => {
     vi.useFakeTimers();
     const fetchMock = vi
-      .fn()
+      .fn<typeof fetch>()
       .mockResolvedValueOnce(errorResponse(429, "rate_limited"))
       .mockResolvedValueOnce(errorResponse(503, "service_unavailable"))
       .mockResolvedValueOnce(pageResponse());
@@ -73,7 +69,7 @@ describe("Notion request retries", () => {
   it("settles after three attempts without detached retries", async () => {
     vi.useFakeTimers();
     const fetchMock = vi
-      .fn()
+      .fn<typeof fetch>()
       .mockImplementation(async () => errorResponse(503, "service_unavailable"));
     vi.stubGlobal("fetch", fetchMock);
 
@@ -90,7 +86,7 @@ describe("Notion request retries", () => {
   it("retries network errors", async () => {
     vi.useFakeTimers();
     const fetchMock = vi
-      .fn()
+      .fn<typeof fetch>()
       .mockRejectedValueOnce(new TypeError("Mock network failure"))
       .mockResolvedValueOnce(pageResponse());
     vi.stubGlobal("fetch", fetchMock);

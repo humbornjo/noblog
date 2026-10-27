@@ -24,22 +24,39 @@ export interface FrontmatterContext {
   readonly isDatabasePage: boolean;
 }
 
+export type FrontmatterValue =
+  | string
+  | number
+  | boolean
+  | null
+  | Date
+  | readonly FrontmatterValue[]
+  | { readonly [key: string]: FrontmatterValue };
+
+export type FrontmatterRecord = Readonly<
+  Record<string, FrontmatterValue | undefined>
+>;
+
 export type FrontmatterAdapter = (
   context: FrontmatterContext,
-) => Readonly<Record<string, unknown>>;
+) => FrontmatterRecord;
 
 export interface BlockTransformerContext {
   readonly pageId: string;
 }
 
-export type BlockTransformer = (
-  block: BlockObjectResponse,
+export type BlockTransformer<
+  K extends BlockObjectResponse["type"] = BlockObjectResponse["type"],
+> = (
+  block: Extract<BlockObjectResponse, { type: K }>,
   context: BlockTransformerContext,
 ) => string | undefined | Promise<string | undefined>;
 
-export type BlockTransformers = Readonly<
-  Partial<Record<BlockObjectResponse["type"], BlockTransformer>>
->;
+export type BlockTransformers = {
+  readonly [K in BlockObjectResponse["type"]]?:
+    | BlockTransformer<K>
+    | undefined;
+};
 
 export interface RenderOptions {
   readonly layoutPath?: string;

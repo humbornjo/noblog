@@ -1,21 +1,37 @@
 import { describe, expect, it } from "vitest";
+import type { PageObjectResponse } from "@notionhq/client";
 import { renderFrontmatter } from "../src/lib/noblog/frontmatter.js";
 import { page, text } from "./fixtures.js";
 
-const intendedProperties = {
+const intendedProperties: PageObjectResponse["properties"] = {
   tags: {
+    id: "tags",
     type: "multi_select",
-    multi_select: [{ name: "blog" }, { name: "typescript" }],
+    multi_select: [
+      { id: "blog", name: "blog", color: "default" },
+      { id: "typescript", name: "typescript", color: "default" },
+    ],
   },
-  date: { type: "date", date: { start: "2024-01-24" } },
+  date: {
+    id: "date",
+    type: "date",
+    date: { start: "2024-01-24", end: null, time_zone: null },
+  },
 };
 
-const unrelatedProperties = {
+const unrelatedProperties: PageObjectResponse["properties"] = {
   categories: {
+    id: "categories",
     type: "multi_select",
-    multi_select: [{ name: "not-a-tag" }],
+    multi_select: [
+      { id: "not-a-tag", name: "not-a-tag", color: "default" },
+    ],
   },
-  updated: { type: "date", date: { start: "2030-12-31" } },
+  updated: {
+    id: "updated",
+    type: "date",
+    date: { start: "2030-12-31", end: null, time_zone: null },
+  },
 };
 
 describe("frontmatter properties", () => {
@@ -28,7 +44,7 @@ describe("frontmatter properties", () => {
       : { ...unrelatedProperties, ...intendedProperties };
     const rendered = renderFrontmatter(
       page("page", {
-        Name: { type: "title", title: [text("Post")] },
+        Name: { id: "title", type: "title", title: [text("Post")] },
         ...orderedProperties,
       }),
     );

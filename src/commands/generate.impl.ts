@@ -52,8 +52,8 @@ export default async function generate(
         layoutPath:
           flags.layout ?? fileConfig?.output?.layoutPath ?? DEFAULT_LAYOUT_PATH,
         recursive: fileConfig?.output?.recursive ?? true,
-        propertyMap,
-        frontmatter,
+        ...(propertyMap !== undefined ? { propertyMap } : {}),
+        ...(frontmatter !== undefined ? { frontmatter } : {}),
         verbose: flags.verbose,
       },
       this.process,

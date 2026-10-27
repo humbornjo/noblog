@@ -9,6 +9,7 @@ import {
   writeFile,
 } from "node:fs/promises";
 import { dirname, join, relative, resolve, sep } from "node:path";
+import { getErrorCode } from "../errors.js";
 import {
   DEFAULT_LAYOUT_PATH,
   DEFAULT_SAVE_PATH,
@@ -88,7 +89,7 @@ async function getStats(path: string) {
   try {
     return await lstat(path);
   } catch (error: unknown) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") return undefined;
+    if (getErrorCode(error) === "ENOENT") return undefined;
     throw error;
   }
 }

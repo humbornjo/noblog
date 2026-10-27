@@ -1,7 +1,4 @@
-import type {
-  BlockObjectResponse,
-  RichTextItemResponse,
-} from "@notionhq/client";
+import type { BlockObjectResponse } from "@notionhq/client";
 import * as md from "./markdown.js";
 import { renderPlainText, renderRichText } from "./rich-text.js";
 import type {
@@ -123,6 +120,15 @@ function containsOwnChildren(block: BlockObjectResponse): boolean {
   );
 }
 
+function transformBlock<K extends BlockObjectResponse["type"]>(
+  type: K,
+  block: Extract<BlockObjectResponse, { type: NoInfer<K> }>,
+  context: BlockRenderContext,
+): string | undefined | Promise<string | undefined> {
+  const transformer = context.transformers?.[type];
+  return transformer?.(block, context);
+}
+
 async function renderBlockNode(
   node: BlockNode,
   children: string,
@@ -130,10 +136,8 @@ async function renderBlockNode(
   context: BlockRenderContext,
 ): Promise<string> {
   const { block } = node;
-  const transformer = context.transformers?.[block.type];
-  const transformed = await transformer?.(block, context);
-  const content =
-    transformed ?? (await renderDefaultBlock(node, context));
+  const transformed = await transformBlock(block.type, block, context);
+  const content = transformed ?? (await renderDefaultBlock(node));
 
   switch (block.type) {
     case "toggle":
@@ -175,10 +179,7 @@ function withIndentedChildren(
   return `${content}\n${indented}`;
 }
 
-async function renderDefaultBlock(
-  node: BlockNode,
-  context: BlockRenderContext,
-): Promise<string> {
+async function renderDefaultBlock(node: BlockNode): Promise<string> {
   const { block } = node;
 
   switch (block.type) {
@@ -255,16 +256,16 @@ async function renderDefaultBlock(
   }
 }
 
-interface FileContent {
-  readonly type: "file" | "external";
-  readonly file?: { readonly url: string };
-  readonly external?: { readonly url: string };
-  readonly caption: readonly RichTextItemResponse[];
-}
+type FileContent =
+  | Extract<BlockObjectResponse, { type: "image" }>["image"]
+  | Extract<BlockObjectResponse, { type: "pdf" }>["pdf"]
+  | Extract<BlockObjectResponse, { type: "file" }>["file"]
+  | Extract<BlockObjectResponse, { type: "video" }>["video"]
+  | Extract<BlockObjectResponse, { type: "audio" }>["audio"];
 
-function getFileUrl(content: Omit<FileContent, "caption">): string {
-  if (content.type === "external") return content.external?.url ?? "";
-  return content.file?.url ?? "";
+function getFileUrl(content: FileContent): string {
+  if (content.type === "external") return content.external.url;
+  return content.file.url;
 }
 
 function getFileName(url: string): string | undefined {
