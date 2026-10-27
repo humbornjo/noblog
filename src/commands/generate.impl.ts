@@ -2,12 +2,14 @@ import { ConfigurationError, loadConfig } from "../config.js";
 import type { CliContext } from "../context.js";
 import {
   DEFAULT_SAVE_PATH,
+  DEFAULT_STORE_PATH,
   DEFAULT_SUB_PATH,
 } from "../lib/noblog/defaults.js";
 
 interface GenerateFlags {
   verbose: boolean;
   layout: string;
+  store: string;
 }
 
 export default async function generate(
@@ -22,6 +24,7 @@ export default async function generate(
       config,
       {
         savePath: savePath ?? DEFAULT_SAVE_PATH,
+        storePath: flags.store ?? DEFAULT_STORE_PATH,
         subPath: subPath ?? DEFAULT_SUB_PATH,
         layoutPath: flags.layout,
         verbose: flags.verbose,

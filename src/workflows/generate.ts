@@ -1,9 +1,14 @@
 import type { NoblogConfig } from "../config.js";
-import { renderPages, writePages } from "../lib/noblog/index.js";
+import {
+  renderPages,
+  resolveStoreLayoutPath,
+  writePages,
+} from "../lib/noblog/index.js";
 import { createNotionSource } from "../lib/notion/client.js";
 
 export interface GenerateOptions {
   savePath: string;
+  storePath: string;
   subPath: string;
   layoutPath: string;
   verbose: boolean;
@@ -20,6 +25,7 @@ export async function generateBlog(
   output: GenerateOutput,
 ): Promise<void> {
   const notion = createNotionSource(config);
+  const storeLayoutPath = resolveStoreLayoutPath(options);
 
   if (options.verbose) {
     output.stderr.write("Fetching posts from Notion...\n");
@@ -31,17 +37,20 @@ export async function generateBlog(
     output.stderr.write(
       `Found ${posts.length} pages\n` +
         `Save path: ${options.savePath}\n` +
+        `Store path: ${options.storePath}\n` +
         `Sub path: ${options.subPath}\n` +
         `Layout path: ${options.layoutPath}\n`,
     );
   }
 
   const pages = await renderPages(posts, notion, {
-    layoutPath: options.layoutPath,
+    layoutPath: storeLayoutPath,
+    nestedLayoutPath: storeLayoutPath,
     subPath: options.subPath,
   });
   await writePages(pages, {
     savePath: options.savePath,
+    storePath: options.storePath,
     subPath: options.subPath,
   });
 

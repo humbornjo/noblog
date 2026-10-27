@@ -16,10 +16,15 @@ vi.mock("../src/lib/notion/client.js", () => ({
   createNotionSource: mocks.createNotionSource,
 }));
 
-vi.mock("../src/lib/noblog/index.js", () => ({
-  renderPages: mocks.renderPages,
-  writePages: mocks.writePages,
-}));
+vi.mock("../src/lib/noblog/index.js", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("../src/lib/noblog/index.js")>();
+  return {
+    ...actual,
+    renderPages: mocks.renderPages,
+    writePages: mocks.writePages,
+  };
+});
 
 describe("generateBlog", () => {
   beforeEach(() => {
@@ -34,6 +39,7 @@ describe("generateBlog", () => {
     const config = { notionApiSecret: "secret", databaseId: "database" };
     const options = {
       savePath: "posts",
+      storePath: "store",
       subPath: "children",
       layoutPath: "../Layout.astro",
       verbose: false,
@@ -48,10 +54,12 @@ describe("generateBlog", () => {
     expect(mocks.createNotionSource).toHaveBeenCalledWith(config);
     expect(mocks.renderPages).toHaveBeenCalledWith([], mocks.notion, {
       layoutPath: "../Layout.astro",
+      nestedLayoutPath: "../Layout.astro",
       subPath: "children",
     });
     expect(mocks.writePages).toHaveBeenCalledWith([], {
       savePath: "posts",
+      storePath: "store",
       subPath: "children",
     });
     expect(output.stdout.write).toHaveBeenCalledWith(
@@ -71,6 +79,7 @@ describe("generateBlog", () => {
       { notionApiSecret: "secret", databaseId: "database" },
       {
         savePath: "posts",
+        storePath: "store",
         subPath: "children",
         layoutPath: "../Layout.astro",
         verbose: true,
@@ -84,7 +93,7 @@ describe("generateBlog", () => {
     );
     expect(output.stderr.write).toHaveBeenNthCalledWith(
       2,
-      "Found 1 pages\nSave path: posts\nSub path: children\nLayout path: ../Layout.astro\n",
+      "Found 1 pages\nSave path: posts\nStore path: store\nSub path: children\nLayout path: ../Layout.astro\n",
     );
   });
 });

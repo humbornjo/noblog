@@ -13,6 +13,7 @@ interface PageRenderContext {
   readonly reader: NotionReader;
   readonly databasePageIds: ReadonlySet<string>;
   readonly layoutPath: string;
+  readonly nestedLayoutPath?: string;
   readonly subPath: string;
   readonly recursive: boolean;
   readonly transformers?: BlockTransformers;
@@ -55,6 +56,7 @@ function createContext(
     reader,
     databasePageIds: new Set(databasePageIds),
     layoutPath: options.layoutPath ?? DEFAULT_LAYOUT_PATH,
+    nestedLayoutPath: options.nestedLayoutPath,
     subPath: options.subPath ?? DEFAULT_SUB_PATH,
     recursive: options.recursive ?? true,
     transformers: options.transformers,
@@ -100,6 +102,7 @@ async function renderSinglePage(
   });
   const frontmatter = renderFrontmatter(page, {
     layoutPath: context.layoutPath,
+    nestedLayoutPath: context.nestedLayoutPath,
     isDatabasePage: context.databasePageIds.has(pageId),
   });
 

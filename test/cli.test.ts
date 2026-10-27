@@ -75,6 +75,7 @@ describe("generate routing and arguments", () => {
         },
         {
           savePath: "./src/pages/posts/",
+          storePath: ".noblog/pages/",
           subPath: "nob_children/",
           layoutPath: "../../layouts/MarkdownPostLayout.astro",
           verbose: false,
@@ -102,10 +103,23 @@ describe("generate routing and arguments", () => {
       expect.any(Object),
       {
         savePath: "content/blog",
+        storePath: ".noblog/pages/",
         subPath: "children",
         layoutPath: "../PostLayout.astro",
         verbose: true,
       },
+      context.process,
+    );
+  });
+
+  it("accepts a custom canonical page store", async () => {
+    const { context, generateBlog } = createTestContext();
+
+    await runCli(["--store", "content/.db"], context);
+
+    expect(generateBlog).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.objectContaining({ storePath: "content/.db" }),
       context.process,
     );
   });
@@ -157,6 +171,23 @@ describe("generate routing and arguments", () => {
     },
   );
 
+  it.each(["help", "version", "generate"])(
+    "treats %s as a store value rather than a control word",
+    async (storePath) => {
+      const { context, generateBlog, stdout } = createTestContext();
+
+      await runCli(["--store", storePath], context);
+
+      expect(context.process.exitCode).toBe(0);
+      expect(generateBlog).toHaveBeenCalledWith(
+        expect.any(Object),
+        expect.objectContaining({ storePath }),
+        context.process,
+      );
+      expect(stdout()).toBe("");
+    },
+  );
+
   it("supports escaped control words as paths", async () => {
     const { context, generateBlog, stdout } = createTestContext();
 
@@ -191,6 +222,10 @@ describe("generate routing and arguments", () => {
     {
       inputs: ["--layout"],
       message: "Expected input for flag --layout",
+    },
+    {
+      inputs: ["--store"],
+      message: "Expected input for flag --store",
     },
     {
       inputs: ["one", "two", "three"],

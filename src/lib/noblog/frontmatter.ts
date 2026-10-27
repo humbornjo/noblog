@@ -3,6 +3,7 @@ import { DEFAULT_LAYOUT_PATH } from "./defaults.js";
 
 export interface FrontmatterOptions {
   readonly layoutPath?: string;
+  readonly nestedLayoutPath?: string;
   readonly isDatabasePage?: boolean;
 }
 
@@ -12,9 +13,12 @@ export function renderFrontmatter(
 ): string {
   const {
     layoutPath = DEFAULT_LAYOUT_PATH,
+    nestedLayoutPath,
     isDatabasePage = true,
   } = options;
-  const nestedPrefix = isDatabasePage ? "" : "../";
+  const resolvedLayoutPath = isDatabasePage
+    ? layoutPath
+    : (nestedLayoutPath ?? `../${layoutPath}`);
 
   let title = "";
   let description = "";
@@ -52,7 +56,7 @@ export function renderFrontmatter(
 
   return (
     "---\n" +
-    `layout: ${nestedPrefix}${layoutPath}\n` +
+    `layout: ${resolvedLayoutPath}\n` +
     `title: ${JSON.stringify(title)}\n` +
     `description: ${JSON.stringify(description)}\n` +
     `tags: ${JSON.stringify(tags)}\n` +

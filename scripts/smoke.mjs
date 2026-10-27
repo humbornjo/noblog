@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { createRequire } from "node:module";
 import { mkdtempSync, rmSync } from "node:fs";
-import { readFile, stat } from "node:fs/promises";
+import { lstat, readFile, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -29,6 +29,7 @@ function run(...args) {
 const help = run("--help");
 assert.equal(help.status, 0, help.stderr);
 assert.match(help.stdout, /noblog generate/);
+assert.match(help.stdout, /--store/);
 
 for (const args of [["--version"], ["version"]]) {
   const version = run(...args);
@@ -53,7 +54,26 @@ assert.equal(typeof library.renderPage, "function");
 assert.equal(typeof library.renderPages, "function");
 assert.equal(typeof library.writePages, "function");
 assert.equal(typeof library.createNotionSource, "function");
+assert.equal(typeof library.resolveStoreLayoutPath, "function");
 assert.equal("generateBlog" in library, false);
+
+const viewPaths = await library.writePages(
+  [
+    {
+      id: "root",
+      content: "# Root\n",
+      childPageIds: [],
+      isDatabasePage: true,
+    },
+  ],
+  {
+    savePath: join(cwd, "views"),
+    storePath: join(cwd, "store"),
+  },
+);
+assert.equal((await lstat(join(cwd, "store", "root.md"))).isFile(), true);
+assert.equal((await lstat(viewPaths[0])).isSymbolicLink(), true);
+assert.equal(await readFile(viewPaths[0], "utf8"), "# Root\n");
 
 const require = createRequire(import.meta.url);
 const commonjs = require("noblog");
@@ -64,5 +84,6 @@ const declarations = await readFile(
   "utf8",
 );
 assert.match(declarations, /renderPages/);
+assert.match(declarations, /resolveStoreLayoutPath/);
 
 console.log("Built CLI and library smoke checks passed.");

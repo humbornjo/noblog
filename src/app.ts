@@ -56,6 +56,8 @@ export const app = buildApplication(
   },
 );
 
+const PATH_FLAGS = new Set(["--layout", "--store"]);
+
 export async function runCli(
   inputs: readonly string[],
   context: CliContext,
@@ -82,7 +84,7 @@ export async function runCli(
       if (input === "generate" && index !== 0) continue;
 
       remainingInputs.push(input);
-      if (input === "--layout" && hasFlagValue(commandInputs, index)) {
+      if (PATH_FLAGS.has(input) && hasFlagValue(commandInputs, index)) {
         remainingInputs.push(commandInputs[index + 1]!);
         index++;
       }
@@ -116,11 +118,12 @@ function hasLegacyControl(
   control: "help" | "version" | "--version",
 ): boolean {
   for (let index = 0; index < inputs.length; index++) {
-    if (inputs[index] === "--layout" && hasFlagValue(inputs, index)) {
+    const input = inputs[index]!;
+    if (PATH_FLAGS.has(input) && hasFlagValue(inputs, index)) {
       index++;
       continue;
     }
-    if (inputs[index] === control) return true;
+    if (input === control) return true;
   }
   return false;
 }

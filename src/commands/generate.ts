@@ -2,6 +2,7 @@ import { buildCommand } from "@stricli/core";
 import {
   DEFAULT_LAYOUT_PATH,
   DEFAULT_SAVE_PATH,
+  DEFAULT_STORE_PATH,
   DEFAULT_SUB_PATH,
 } from "../lib/noblog/defaults.js";
 
@@ -17,10 +18,17 @@ export const generateCommand = buildCommand({
       },
       layout: {
         kind: "parsed",
-        brief: "Layout path relative to each generated post",
+        brief: "Layout path relative to SAVE_PATH",
         placeholder: "PATH",
         parse: (input) => input,
         default: DEFAULT_LAYOUT_PATH,
+      },
+      store: {
+        kind: "parsed",
+        brief: "Directory for canonical Markdown files",
+        placeholder: "PATH",
+        parse: (input) => input,
+        default: DEFAULT_STORE_PATH,
       },
     },
     aliases: {
@@ -30,14 +38,14 @@ export const generateCommand = buildCommand({
       kind: "tuple",
       parameters: [
         {
-          brief: "Directory for database posts",
+          brief: "Public view directory for database posts",
           placeholder: "SAVE_PATH",
           parse: (input) => input,
           optional: true,
           default: DEFAULT_SAVE_PATH,
         },
         {
-          brief: "Subdirectory of SAVE_PATH for nested pages",
+          brief: "Subdirectory of SAVE_PATH for nested-page views",
           placeholder: "SUB_PATH",
           parse: (input) => input,
           optional: true,

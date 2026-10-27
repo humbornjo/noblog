@@ -38,4 +38,15 @@ describe("frontmatter properties", () => {
     expect(rendered).not.toContain("not-a-tag");
     expect(rendered).not.toContain("2030-12-31");
   });
+
+  it("supports one store-relative layout for root and nested pages", () => {
+    const layoutPath = "../../src/layouts/MarkdownPostLayout.astro";
+    const rendered = renderFrontmatter(page("nested"), {
+      layoutPath,
+      nestedLayoutPath: layoutPath,
+      isDatabasePage: false,
+    });
+
+    expect(rendered).toContain(`layout: ${layoutPath}\n`);
+  });
 });

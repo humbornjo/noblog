@@ -32,6 +32,7 @@ export type BlockTransformers = Readonly<
 
 export interface RenderOptions {
   readonly layoutPath?: string;
+  readonly nestedLayoutPath?: string;
   readonly subPath?: string;
   readonly recursive?: boolean;
   readonly transformers?: BlockTransformers;
@@ -46,5 +47,12 @@ export interface RenderedPage {
 
 export interface WritePagesOptions {
   readonly savePath?: string;
+  readonly storePath?: string;
   readonly subPath?: string;
+}
+
+export interface StoreLayoutOptions {
+  readonly savePath?: string;
+  readonly storePath?: string;
+  readonly layoutPath?: string;
 }
