@@ -122,6 +122,24 @@ describe("page rendering", () => {
     expect(rendered[0]?.content).toContain("↳ [Child](./child.md)");
   });
 
+  it("uses a child-page wrapper instead of the marker", async () => {
+    const { root, reader } = createFixture();
+
+    const rendered = await renderPages([root], reader, {
+      childPageMarker: "↳",
+      childPageWrapper: {
+        head: "<noblog-subpage>",
+        tail: "</noblog-subpage>",
+      },
+      recursive: false,
+    });
+
+    expect(rendered[0]?.content).toContain(
+      "<noblog-subpage>[Child](./child.md)</noblog-subpage>",
+    );
+    expect(rendered[0]?.content).not.toContain("↳");
+  });
+
   it("renders a single fetched page through the public API", async () => {
     const { reader } = createFixture();
 

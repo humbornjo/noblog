@@ -157,6 +157,9 @@ output:
   layoutPath: ../ConfigLayout.astro
   recursive: false
   childPageMarker: "↳"
+  childPageWrapper:
+    head: "<noblog-subpage>"
+    tail: "</noblog-subpage>"
 frontmatter:
   fields:
     series:
@@ -177,6 +180,10 @@ frontmatter:
             layoutPath: "../ConfigLayout.astro",
             recursive: false,
             childPageMarker: "↳",
+            childPageWrapper: {
+              head: "<noblog-subpage>",
+              tail: "</noblog-subpage>",
+            },
             propertyMap: { series: "Series" },
             frontmatter: expect.any(Function),
             verbose: false,

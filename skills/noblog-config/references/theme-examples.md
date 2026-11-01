@@ -2,7 +2,7 @@
 
 These examples are snapshots, not substitutes for inspecting the installed theme. The assets contain complete YAML starting points.
 
-Child-page links are prefixed by `output.childPageMarker`, which defaults to `⸎` (U+2E0E EDITORIAL CORONIS). Set it to the marker the theme recognizes.
+Child-page links are prefixed by `output.childPageMarker`, which defaults to `⸎` (U+2E0E EDITORIAL CORONIS). Set it to the marker the theme recognizes. If the theme expects a wrapper element, configure `output.childPageWrapper` with `head` and `tail`; it overrides the marker.
 
 ## Nobloger
 

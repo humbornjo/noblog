@@ -49,6 +49,29 @@
           "description": "Marker prefixed to child-page links (default: ⸎, U+2E0E).",
           "type": "string",
           "minLength": 1
+        },
+        "childPageWrapper": {
+          "description": "Optional wrapper around child-page Markdown links; overrides childPageMarker.",
+          "type": "object",
+          "properties": {
+            "head": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^[^\\r\\n]+$",
+              "description": "Opening wrapper emitted before the child-page Markdown link."
+            },
+            "tail": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^[^\\r\\n]+$",
+              "description": "Closing wrapper emitted after the child-page Markdown link."
+            }
+          },
+          "required": [
+            "head",
+            "tail"
+          ],
+          "additionalProperties": false
         }
       },
       "additionalProperties": false

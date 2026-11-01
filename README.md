@@ -154,6 +154,17 @@ frontmatter:
 
 `output.childPageMarker` sets the prefix on child-page links. It defaults to `⸎` (U+2E0E EDITORIAL CORONIS) and must be a non-empty string. Set it to a marker your theme recognizes.
 
+`output.childPageWrapper` optionally wraps the child-page link instead:
+
+```yaml
+output:
+  childPageWrapper:
+    head: "<noblog-subpage>"
+    tail: "</noblog-subpage>"
+```
+
+When configured, the wrapper overrides `output.childPageMarker`. Both strings must be non-empty and single-line. The wrapper is emitted as raw content, so use it with an HTML-capable Markdown renderer.
+
 The keys under `notion.properties` are logical source names; their values must exactly match Notion property names. Custom sources such as `series` must be declared there before frontmatter can reference them. Built-in sources need no declaration.
 
 Validate a file without Notion credentials, a Notion client, or network access:
@@ -188,7 +199,7 @@ project-root/
             └── <database-page-id>.md  # relative symlink
 ```
 
-Only database posts receive public views. Child pages live exclusively in the canonical store, and child links are written as `<marker> [title](./<child-page-id>.md)`. The marker defaults to `⸎` (U+2E0E EDITORIAL CORONIS) and is configurable with `output.childPageMarker`; set it to match the marker your theme recognizes. Links resolve as siblings after Vite/Astro resolves symlinks to real paths, so child pages stay out of `src/pages/posts/*.md` listings. Use `--store PATH` to change the canonical store independently of the public path.
+Only database posts receive public views. Child pages live exclusively in the canonical store, and child links are written as `<marker> [title](./<child-page-id>.md)`. The marker defaults to `⸎` (U+2E0E EDITORIAL CORONIS) and is configurable with `output.childPageMarker`; set it to match the marker your theme recognizes. Set `output.childPageWrapper` to wrap the link in custom `head`/`tail` strings instead; the wrapper overrides the marker. Links resolve as siblings after Vite/Astro resolves symlinks to real paths, so child pages stay out of `src/pages/posts/*.md` listings. Use `--store PATH` to change the canonical store independently of the public path.
 
 **Routing migration:** Noblog no longer creates `/nob_children/` routes. Configure the theme to load and route child pages from `.noblog/pages/` (or the custom store). Existing nested view files are not deleted; remove or redirect them separately after updating the theme. Existing `SUB_PATH` arguments are ignored with a warning.
 
@@ -272,7 +283,7 @@ const pages = await renderPages(posts, notion, { layoutPath });
 await writePages(pages, { savePath, storePath });
 ```
 
-`renderPages` recursively collects child pages by default and returns complete Markdown documents with frontmatter. Set `recursive: false` to render only the supplied database pages. Set `childPageMarker` in `RenderOptions` to override the default `⸎` (U+2E0E EDITORIAL CORONIS) prefix used for child-page links. `writePages` writes every canonical file but returns only the public database-post view paths. When rendering for a canonical store, use `resolveStoreLayoutPath` as above so layout imports remain valid after symlink resolution.
+`renderPages` recursively collects child pages by default and returns complete Markdown documents with frontmatter. Set `recursive: false` to render only the supplied database pages. Set `childPageMarker` in `RenderOptions` to override the default `⸎` (U+2E0E EDITORIAL CORONIS) prefix used for child-page links. Set `childPageWrapper` to `{ head, tail }` to wrap the link instead; it overrides `childPageMarker`. `writePages` writes every canonical file but returns only the public database-post view paths. When rendering for a canonical store, use `resolveStoreLayoutPath` as above so layout imports remain valid after symlink resolution.
 
 Use `renderPage` for a single page, or supply any implementation of the `NotionReader` interface instead of the built-in adapter. Lower-level helpers such as `renderRichText` and `renderFrontmatter` are exported as well. To customize a block, pass a `transformers` map in `RenderOptions`; return a string to override the default renderer or `undefined` to fall back to it. Each key narrows its handler's block payload to the corresponding Notion block type, so a `paragraph` transformer can access `block.paragraph` directly. The programmatic API does not load `.env`; load environment variables yourself or pass explicit configuration.
 

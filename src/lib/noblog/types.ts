@@ -58,10 +58,16 @@ export type BlockTransformers = {
     | undefined;
 };
 
+export interface ChildPageWrapper {
+  readonly head: string;
+  readonly tail: string;
+}
+
 export interface RenderOptions {
   readonly layoutPath?: string;
   readonly recursive?: boolean;
   readonly childPageMarker?: string;
+  readonly childPageWrapper?: ChildPageWrapper;
   readonly propertyMap?: NotionPropertyMap;
   readonly frontmatter?: FrontmatterAdapter;
   readonly transformers?: BlockTransformers;

@@ -53,6 +53,10 @@ describe("generateBlog", () => {
       layoutPath: "../Layout.astro",
       recursive: false,
       childPageMarker: "↳",
+      childPageWrapper: {
+        head: "<noblog-subpage>",
+        tail: "</noblog-subpage>",
+      },
       propertyMap,
       frontmatter,
       verbose: false,
@@ -69,6 +73,10 @@ describe("generateBlog", () => {
       layoutPath: "../Layout.astro",
       recursive: false,
       childPageMarker: "↳",
+      childPageWrapper: {
+        head: "<noblog-subpage>",
+        tail: "</noblog-subpage>",
+      },
       propertyMap,
       frontmatter,
     });
