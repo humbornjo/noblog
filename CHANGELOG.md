@@ -2,6 +2,21 @@
 
 All notable changes to `noblog` are documented in this file.
 
+## [0.3.0-beta.3] - 2026-11-01
+
+### Added
+
+- Optional `output.childPageWrapper` in YAML and `RenderOptions.childPageWrapper`
+  with `head` and `tail` strings. It renders
+  `<head>[title](./<page-id>.md)<tail>` and overrides `childPageMarker` when
+  configured.
+- Wrapper `head` and `tail` values must be non-empty single-line strings.
+
+### Changed
+
+- `childPageMarker` remains the default behavior, with `⸎` (U+2E0E EDITORIAL
+  CORONIS) as the built-in prefix.
+
 ## [0.3.0-beta.2] - 2026-11-01
 
 ### Added
