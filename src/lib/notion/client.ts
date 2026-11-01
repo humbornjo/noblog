@@ -1,135 +1,126 @@
-import "dotenv/config";
-import retry from "async-retry";
-import { Client, isNotionClientError } from "@notionhq/client";
-
+import {
+  Client,
+  isFullBlock,
+  isFullDatabase,
+  isFullPage,
+  isNotionClientError,
+} from "@notionhq/client";
 import type {
   BlockObjectResponse,
-  DatabaseObjectResponse,
-  GetDatabaseParameters,
-  ListBlockChildrenParameters,
-  ListBlockChildrenResponse,
   PageObjectResponse,
-  QueryDataSourceParameters,
-  QueryDataSourceResponse,
-} from "@notionhq/client/build/src/api-endpoints.js";
+} from "@notionhq/client";
+import type { NotionReader } from "../noblog/types.js";
 
-const NOTION_API_SECRET = process.env.NOTION_API_SECRET ?? "";
-const NOBLOG_DATABASE_ID = process.env.NOBLOG_DATABASE_ID ?? "";
+export interface NotionSourceConfig {
+  readonly notionApiSecret: string;
+  readonly databaseId: string;
+}
 
-export const client = new Client({
-  auth: NOTION_API_SECRET,
-});
+export interface NotionSource extends NotionReader {
+  listPages(): Promise<PageObjectResponse[]>;
+}
 
-const numberOfRetry = 2;
+export function createNotionSource(
+  config: NotionSourceConfig,
+): NotionSource {
+  const client = new Client({ auth: config.notionApiSecret });
+  return {
+    listPages: () => listPages(client, config.databaseId),
+    getPage: (pageId) => getPage(client, pageId),
+    getBlockChildren: (blockId) => getBlockChildren(client, blockId),
+  };
+}
 
-export async function ListPages(): Promise<PageObjectResponse[]> {
-  const respDatabase = (await client.databases.retrieve({
-    database_id: NOBLOG_DATABASE_ID,
-  } as GetDatabaseParameters)) as DatabaseObjectResponse;
+async function listPages(
+  client: Client,
+  databaseId: string,
+): Promise<PageObjectResponse[]> {
+  const database = await withRetry(() =>
+    client.databases.retrieve({ database_id: databaseId }),
+  );
+  if (!isFullDatabase(database)) {
+    throw new Error(`Notion database ${databaseId} is not a full database`);
+  }
 
-  const reqDataSources: Array<QueryDataSourceParameters> =
-    respDatabase.data_sources.map((source) => ({
-      data_source_id: source.id,
-      filter: {
-        and: [
-          {
+  const pages: PageObjectResponse[] = [];
+  for (const source of database.data_sources) {
+    let startCursor: string | undefined;
+    do {
+      const response = await withRetry(() =>
+        client.dataSources.query({
+          data_source_id: source.id,
+          filter: {
             property: "publish",
             checkbox: { equals: true },
           },
-        ],
-      },
-      sorts: [
-        {
-          property: "date",
-          direction: "descending",
-        },
-      ],
-      page_size: 100,
-    }));
-
-  let results = [] as Array<PageObjectResponse>;
-  for (const req of reqDataSources) {
-    let params: QueryDataSourceParameters = req;
-    while (true) {
-      const resp: QueryDataSourceResponse = await retry(
-        async (bail) => {
-          try {
-            return client.dataSources.query(params);
-          } catch (error: unknown) {
-            if (isNotionClientError(error)) {
-              bail(error);
-            }
-            throw error;
-          }
-        },
-        { retries: numberOfRetry },
+          sorts: [{ property: "date", direction: "descending" }],
+          page_size: 100,
+          ...(startCursor !== undefined
+            ? { start_cursor: startCursor }
+            : {}),
+        }),
       );
-
-      results = results.concat(resp.results as PageObjectResponse[]);
-      if (!resp.has_more) {
-        break;
-      }
-      params.start_cursor = resp.next_cursor as string;
-    }
+      pages.push(...response.results.filter(isFullPage));
+      startCursor = response.next_cursor ?? undefined;
+      if (!response.has_more) break;
+    } while (startCursor);
   }
 
-  return results;
+  return pages;
 }
 
-export async function GetPage(page_id: string): Promise<PageObjectResponse> {
-  const result = await retry(
-    async (bail) => {
-      try {
-        return (await client.pages.retrieve({
-          page_id: page_id,
-        })) as PageObjectResponse;
-      } catch (error: unknown) {
-        if (isNotionClientError(error)) {
-          bail(error);
-        }
-        throw error;
-      }
-    },
-    { retries: numberOfRetry },
-  );
-  return result;
+async function getPage(
+  client: Client,
+  pageId: string,
+): Promise<PageObjectResponse> {
+  const page = await withRetry(() => client.pages.retrieve({ page_id: pageId }));
+  if (!isFullPage(page)) {
+    throw new Error(`Notion page ${pageId} is not a full page`);
+  }
+  return page;
 }
 
-export async function GetBlockChildren(
-  block_id: string,
-  totalPage: number = 100,
-) {
-  const results: Array<BlockObjectResponse> = [];
-  let pageCount = 0;
-  let start_cursor = undefined;
+async function getBlockChildren(
+  client: Client,
+  blockId: string,
+): Promise<BlockObjectResponse[]> {
+  const blocks: BlockObjectResponse[] = [];
+  let startCursor: string | undefined;
 
   do {
-    const response = (await client.blocks.children.list({
-      start_cursor: start_cursor,
-      block_id: block_id,
-    } as ListBlockChildrenParameters)) as ListBlockChildrenResponse;
-    results.push(...(response.results as BlockObjectResponse[]));
+    const response = await withRetry(() =>
+      client.blocks.children.list({
+        block_id: blockId,
+        page_size: 100,
+        ...(startCursor !== undefined ? { start_cursor: startCursor } : {}),
+      }),
+    );
+    blocks.push(...response.results.filter(isFullBlock));
+    startCursor = response.next_cursor ?? undefined;
+  } while (startCursor);
 
-    start_cursor = response?.next_cursor;
-    pageCount += 1;
-  } while (
-    start_cursor != null &&
-    (totalPage == null || pageCount < totalPage)
-  );
-
-  ModifyNumberedListObject(results);
-  return results;
+  return blocks;
 }
 
-function ModifyNumberedListObject(blocks: BlockObjectResponse[]) {
-  let numberedListIndex = 0;
-  for (const block of blocks) {
-    if ("type" in block && block.type === "numbered_list_item") {
-      // add numbers
-      // @ts-ignore
-      block.numbered_list_item.number = ++numberedListIndex;
-    } else {
-      numberedListIndex = 0;
+const MAX_ATTEMPTS = 3;
+const INITIAL_RETRY_DELAY_MS = 500;
+
+async function withRetry<T>(operation: () => Promise<T>): Promise<T> {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await operation();
+    } catch (error: unknown) {
+      if (attempt === MAX_ATTEMPTS - 1 || !isRetryable(error)) throw error;
+      await delay(INITIAL_RETRY_DELAY_MS * 2 ** attempt);
     }
   }
+}
+
+function isRetryable(error: unknown): boolean {
+  if (!isNotionClientError(error) || !("status" in error)) return true;
+  return error.status === 408 || error.status === 429 || error.status >= 500;
+}
+
+function delay(milliseconds: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
 }

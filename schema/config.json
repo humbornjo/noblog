@@ -1,0 +1,173 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "number",
+      "const": 1
+    },
+    "notion": {
+      "type": "object",
+      "properties": {
+        "properties": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "minLength": 1
+          },
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "output": {
+      "type": "object",
+      "properties": {
+        "savePath": {
+          "description": "Public directory for database-post symlinks.",
+          "type": "string",
+          "minLength": 1
+        },
+        "storePath": {
+          "description": "Flat directory containing every canonical Markdown file.",
+          "type": "string",
+          "minLength": 1
+        },
+        "layoutPath": {
+          "description": "Layout import path interpreted relative to savePath.",
+          "type": "string",
+          "minLength": 1
+        },
+        "recursive": {
+          "description": "Render child pages recursively (default: true).",
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "frontmatter": {
+      "type": "object",
+      "properties": {
+        "fields": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "minLength": 1
+          },
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "as": {
+                    "description": "Convert to a string (quoting date-like strings) or a YAML date.",
+                    "type": "string",
+                    "enum": [
+                      "string",
+                      "date"
+                    ]
+                  },
+                  "default": {
+                    "description": "Value used when the source is empty.",
+                    "$ref": "#/$defs/__schema0"
+                  },
+                  "omitEmpty": {
+                    "description": "Omit undefined, null, empty strings, and empty arrays.",
+                    "type": "boolean"
+                  },
+                  "required": {
+                    "description": "Fail generation if the value is still empty after defaults.",
+                    "type": "boolean"
+                  },
+                  "from": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Built-in source or a key declared under notion.properties."
+                  }
+                },
+                "required": [
+                  "from"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "as": {
+                    "description": "Convert to a string (quoting date-like strings) or a YAML date.",
+                    "type": "string",
+                    "enum": [
+                      "string",
+                      "date"
+                    ]
+                  },
+                  "default": {
+                    "description": "Value used when the source is empty.",
+                    "$ref": "#/$defs/__schema0"
+                  },
+                  "omitEmpty": {
+                    "description": "Omit undefined, null, empty strings, and empty arrays.",
+                    "type": "boolean"
+                  },
+                  "required": {
+                    "description": "Fail generation if the value is still empty after defaults.",
+                    "type": "boolean"
+                  },
+                  "value": {
+                    "$ref": "#/$defs/__schema0"
+                  }
+                },
+                "required": [
+                  "value"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "version"
+  ],
+  "additionalProperties": false,
+  "description": "Noblog YAML configuration. Notion credentials remain in environment variables or .env files.",
+  "$defs": {
+    "__schema0": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/__schema0"
+          }
+        },
+        {
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/__schema0"
+          }
+        }
+      ]
+    }
+  }
+}

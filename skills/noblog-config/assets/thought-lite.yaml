@@ -1,0 +1,47 @@
+# Matches ThoughtLite's `note` collection; re-check the installed version.
+version: 1
+notion:
+  properties:
+    title: Name
+    publishedAt: date
+    description: description
+    tags: tags
+    series: Series
+    sensitive: Sensitive
+    top: Top
+    archived: archived
+output:
+  # The collection reads canonical files directly from this store.
+  storePath: src/content/note/
+  # Required database-post links stay outside the collection glob.
+  savePath: .noblog/note-links/
+  recursive: true
+frontmatter:
+  fields:
+    title:
+      from: title
+      required: true
+    timestamp:
+      from: publishedAt
+      as: date
+      required: true
+    series:
+      from: series
+      omitEmpty: true
+    tags:
+      from: tags
+      omitEmpty: true
+    description:
+      from: description
+      omitEmpty: true
+    sensitive:
+      from: sensitive
+      default: false
+    toc:
+      value: true
+    top:
+      from: top
+      default: 0
+    draft:
+      from: archived
+      default: false

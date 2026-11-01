@@ -1,0 +1,63 @@
+import { buildCommand } from "@stricli/core";
+
+export const generateCommand = buildCommand({
+  loader: async () => import("./generate.impl.js"),
+  parameters: {
+    flags: {
+      verbose: {
+        kind: "boolean",
+        brief: "Print diagnostic information",
+        default: false,
+        withNegated: false,
+      },
+      config: {
+        kind: "parsed",
+        brief: "YAML configuration file",
+        placeholder: "PATH",
+        parse: (input) => input,
+        optional: true,
+      },
+      layout: {
+        kind: "parsed",
+        brief: "Layout path relative to SAVE_PATH",
+        placeholder: "PATH",
+        parse: (input) => input,
+        optional: true,
+      },
+      store: {
+        kind: "parsed",
+        brief: "Directory for canonical Markdown files",
+        placeholder: "PATH",
+        parse: (input) => input,
+        optional: true,
+      },
+    },
+    aliases: {
+      v: "verbose",
+    },
+    positional: {
+      kind: "tuple",
+      parameters: [
+        {
+          brief: "Public view directory for database posts",
+          placeholder: "SAVE_PATH",
+          parse: (input) => input,
+          optional: true,
+        },
+        {
+          brief: "Deprecated compatibility argument; ignored",
+          placeholder: "SUB_PATH",
+          parse: (input) => input,
+          optional: true,
+        },
+      ],
+    },
+  },
+  docs: {
+    brief: "Generate blog content from Notion",
+    fullDescription:
+      "Fetch published pages from Notion and write Astro-compatible Markdown files. " +
+      "Only database posts receive public symlinks; child pages live in the canonical store. " +
+      "The legacy SUB_PATH argument is accepted but ignored.",
+  },
+});
