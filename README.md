@@ -207,6 +207,10 @@ Generation is repeatable. Existing regular database-post view files with matchin
 
 The store and views must remain together when building or deploying. If generated content is committed, include both; otherwise regenerate before building. Creating the views requires filesystem symlink support. On Windows, this may require Developer Mode or elevated privileges.
 
+## Heading support
+
+Noblog renders Notion heading levels 1 through 4 as Markdown `#` through `####`. The installed `@notionhq/client` types do not declare `heading_4`, so the package exports `Heading4BlockObjectResponse` and `NoblogBlock`; custom readers and block transformers can use those types without assertions.
+
 ## Frontmatter
 
 Without custom Notion or frontmatter mappings, generated files retain the legacy Astro-compatible frontmatter:

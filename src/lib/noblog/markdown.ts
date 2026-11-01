@@ -18,6 +18,7 @@ export const equation = (text: string) => `$$\n${text}\n$$`;
 export const heading1 = (text: string) => `# ${text}`;
 export const heading2 = (text: string) => `## ${text}`;
 export const heading3 = (text: string) => `### ${text}`;
+export const heading4 = (text: string) => `#### ${text}`;
 export const quote = (text: string) => `> ${text.replace(/\n/g, "  \n> ")}`;
 
 export function callout(text: string, icon?: CalloutIcon): string {

@@ -1,5 +1,4 @@
 import { describe, expect, it, vi } from "vitest";
-import type { BlockObjectResponse } from "@notionhq/client";
 import {
   loadBlockTree,
   renderBlockTree,
@@ -7,15 +6,24 @@ import {
 import type {
   BlockRenderContext,
 } from "../src/lib/noblog/blocks.js";
-import type { NotionReader } from "../src/lib/noblog/types.js";
-import { block, blockBase, paragraph, text } from "./fixtures.js";
+import type {
+  NoblogBlock,
+  NotionReader,
+} from "../src/lib/noblog/types.js";
+import {
+  block,
+  blockBase,
+  heading4,
+  paragraph,
+  text,
+} from "./fixtures.js";
 
 const context: BlockRenderContext = {
   pageId: "root",
 };
 
 function readerFor(
-  blocks: Readonly<Record<string, BlockObjectResponse[]>>,
+  blocks: Readonly<Record<string, NoblogBlock[]>>,
 ) {
   const getBlockChildren = vi.fn<NotionReader["getBlockChildren"]>(
     async (id) => blocks[id] ?? [],
@@ -229,6 +237,32 @@ describe("block tree rendering", () => {
       "<noblog-subpage>[Child](./child.md)</noblog-subpage>",
     );
     expect(rendered.content).not.toContain("↳");
+  });
+
+  it("renders heading_4 blocks as level-four Markdown headings", async () => {
+    const { reader } = readerFor({ root: [heading4("h4", "TL;DR")] });
+
+    const tree = await loadBlockTree("root", reader);
+    const rendered = await renderBlockTree(tree, context);
+
+    expect(rendered.content).toContain("#### TL;DR");
+  });
+
+  it("supports a heading_4 transformer with a narrowed payload", async () => {
+    const rendered = await renderBlockTree(
+      [{ block: heading4("h4", "TL;DR"), children: [] }],
+      {
+        ...context,
+        transformers: {
+          heading_4: (block) => {
+            expect(block.heading_4.rich_text).toHaveLength(1);
+            return "Custom H4";
+          },
+        },
+      },
+    );
+
+    expect(rendered.content).toContain("Custom H4");
   });
 
   it("supports custom block transformers with explicit page context", async () => {

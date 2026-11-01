@@ -6,11 +6,12 @@ import type {
   BlockTransformerContext,
   BlockTransformers,
   ChildPageWrapper,
+  NoblogBlock,
   NotionReader,
 } from "./types.js";
 
 export interface BlockNode {
-  readonly block: BlockObjectResponse;
+  readonly block: NoblogBlock;
   readonly children: BlockNode[];
 }
 
@@ -50,7 +51,7 @@ export async function loadBlockTree(
   return nodes;
 }
 
-function getChildSourceId(block: BlockObjectResponse): string | undefined {
+function getChildSourceId(block: NoblogBlock): string | undefined {
   if (block.type === "child_page" || block.type === "child_database") {
     return undefined;
   }
@@ -106,7 +107,7 @@ export async function renderBlockTree(
   return result;
 }
 
-function isListBlock(block: BlockObjectResponse): boolean {
+function isListBlock(block: NoblogBlock): boolean {
   return (
     block.type === "to_do" ||
     block.type === "bulleted_list_item" ||
@@ -114,7 +115,7 @@ function isListBlock(block: BlockObjectResponse): boolean {
   );
 }
 
-function containsOwnChildren(block: BlockObjectResponse): boolean {
+function containsOwnChildren(block: NoblogBlock): boolean {
   return (
     block.type === "child_page" ||
     block.type === "callout" ||
@@ -124,9 +125,9 @@ function containsOwnChildren(block: BlockObjectResponse): boolean {
   );
 }
 
-function transformBlock<K extends BlockObjectResponse["type"]>(
+function transformBlock<K extends NoblogBlock["type"]>(
   type: K,
-  block: Extract<BlockObjectResponse, { type: NoInfer<K> }>,
+  block: Extract<NoblogBlock, { type: NoInfer<K> }>,
   context: BlockRenderContext,
 ): string | undefined | Promise<string | undefined> {
   const transformer = context.transformers?.[type];
@@ -246,6 +247,8 @@ async function renderDefaultBlock(
       return md.heading2(renderRichText(block.heading_2.rich_text));
     case "heading_3":
       return md.heading3(renderRichText(block.heading_3.rich_text));
+    case "heading_4":
+      return md.heading4(renderRichText(block.heading_4.rich_text));
     case "quote":
       return md.quote(renderRichText(block.quote.rich_text));
     case "to_do":
