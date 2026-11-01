@@ -2,6 +2,7 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import packageJson from "../package.json" with { type: "json" };
 import { runCli } from "../src/app.js";
 import { createTestContext } from "./helpers.js";
 
@@ -58,7 +59,7 @@ describe("help and version", () => {
       await runCli(inputs, context);
 
       expect(context.process.exitCode).toBe(0);
-      expect(stdout()).toBe("noblog v0.2.3\n");
+      expect(stdout()).toBe(`noblog v${packageJson.version}\n`);
       expect(stderr()).toBe("");
       expect(generateBlog).not.toHaveBeenCalled();
     },
