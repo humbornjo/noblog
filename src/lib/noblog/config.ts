@@ -63,6 +63,19 @@ export const notionPropertiesSchema = z.record(
   z.string().min(1),
 );
 
+const childPageWrapperSchema = z.strictObject({
+  head: z
+    .string()
+    .min(1)
+    .regex(/^[^\r\n]+$/, "must be a single line")
+    .describe("Opening wrapper emitted before the child-page Markdown link."),
+  tail: z
+    .string()
+    .min(1)
+    .regex(/^[^\r\n]+$/, "must be a single line")
+    .describe("Closing wrapper emitted after the child-page Markdown link."),
+});
+
 export const BUILT_IN_FRONTMATTER_SOURCES = [
   "title",
   "description",
@@ -113,6 +126,11 @@ export const noblogConfigSchema = z
           .optional()
           .describe(
             "Marker prefixed to child-page links (default: ⸎, U+2E0E).",
+          ),
+        childPageWrapper: childPageWrapperSchema
+          .optional()
+          .describe(
+            "Optional wrapper around child-page Markdown links; overrides childPageMarker.",
           ),
       })
       .optional(),

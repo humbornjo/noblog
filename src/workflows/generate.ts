@@ -5,7 +5,10 @@ import {
   resolveStoreLayoutPath,
   writePages,
 } from "../lib/noblog/index.js";
-import type { FrontmatterAdapter } from "../lib/noblog/types.js";
+import type {
+  ChildPageWrapper,
+  FrontmatterAdapter,
+} from "../lib/noblog/types.js";
 import { createNotionSource } from "../lib/notion/client.js";
 
 export interface GenerateOptions {
@@ -14,6 +17,7 @@ export interface GenerateOptions {
   layoutPath: string;
   recursive: boolean;
   childPageMarker: string;
+  childPageWrapper?: ChildPageWrapper;
   propertyMap?: NotionPropertyMap;
   frontmatter?: FrontmatterAdapter;
   verbose: boolean;
@@ -51,6 +55,9 @@ export async function generateBlog(
     layoutPath: storeLayoutPath,
     recursive: options.recursive,
     childPageMarker: options.childPageMarker,
+    ...(options.childPageWrapper !== undefined
+      ? { childPageWrapper: options.childPageWrapper }
+      : {}),
     ...(options.propertyMap !== undefined
       ? { propertyMap: options.propertyMap }
       : {}),

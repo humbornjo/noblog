@@ -5,6 +5,7 @@ import { renderPlainText, renderRichText } from "./rich-text.js";
 import type {
   BlockTransformerContext,
   BlockTransformers,
+  ChildPageWrapper,
   NotionReader,
 } from "./types.js";
 
@@ -15,6 +16,7 @@ export interface BlockNode {
 
 export interface BlockRenderContext extends BlockTransformerContext {
   readonly childPageMarker?: string;
+  readonly childPageWrapper?: ChildPageWrapper;
   readonly transformers?: BlockTransformers;
 }
 
@@ -144,6 +146,7 @@ async function renderBlockNode(
     (await renderDefaultBlock(
       node,
       context.childPageMarker ?? DEFAULT_CHILD_PAGE_MARKER,
+      context.childPageWrapper,
     ));
 
   switch (block.type) {
@@ -189,6 +192,7 @@ function withIndentedChildren(
 async function renderDefaultBlock(
   node: BlockNode,
   childPageMarker: string,
+  childPageWrapper: ChildPageWrapper | undefined,
 ): Promise<string> {
   const { block } = node;
 
@@ -226,7 +230,7 @@ async function renderDefaultBlock(
       return md.link(block.type, `https://www.notion.so/${id}`);
     }
     case "child_page":
-      return renderChildPageLink(block, childPageMarker);
+      return renderChildPageLink(block, childPageMarker, childPageWrapper);
     case "child_database":
       return md.heading2(block.child_database.title || "child_database");
     case "table":
@@ -292,9 +296,13 @@ function renderFileLink(content: FileContent, fallbackTitle: string): string {
 function renderChildPageLink(
   block: Extract<BlockObjectResponse, { type: "child_page" }>,
   marker: string,
+  wrapper: ChildPageWrapper | undefined,
 ): string {
-  // The theme consumes this marker to render child pages as subpage links.
-  return `${marker} ${md.link(block.child_page.title, `./${block.id}.md`)}`;
+  // The theme consumes the marker or wrapper to render subpage links.
+  const link = md.link(block.child_page.title, `./${block.id}.md`);
+  return wrapper === undefined
+    ? `${marker} ${link}`
+    : `${wrapper.head}${link}${wrapper.tail}`;
 }
 
 function renderTable(

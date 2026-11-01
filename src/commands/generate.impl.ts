@@ -38,6 +38,7 @@ export default async function generate(
 
     const propertyMap = fileConfig?.notion?.properties;
     const fields = fileConfig?.frontmatter?.fields;
+    const childPageWrapper = fileConfig?.output?.childPageWrapper;
     const frontmatter =
       fields || propertyMap
         ? createFrontmatterAdapter(fields ?? DEFAULT_FRONTMATTER_FIELDS)
@@ -55,6 +56,7 @@ export default async function generate(
         recursive: fileConfig?.output?.recursive ?? true,
         childPageMarker:
           fileConfig?.output?.childPageMarker ?? DEFAULT_CHILD_PAGE_MARKER,
+        ...(childPageWrapper !== undefined ? { childPageWrapper } : {}),
         ...(propertyMap !== undefined ? { propertyMap } : {}),
         ...(frontmatter !== undefined ? { frontmatter } : {}),
         verbose: flags.verbose,

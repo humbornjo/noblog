@@ -31,8 +31,18 @@ output:
 | `layoutPath` | `../../layouts/MarkdownPostLayout.astro` | Interpreted relative to `savePath`; Noblog writes the equivalent store-relative import. Override with `--layout`. |
 | `recursive` | `true` | Collect and render child pages recursively. |
 | `childPageMarker` | `⸎` (U+2E0E EDITORIAL CORONIS) | Non-empty prefix added to child-page links. Set it to the marker the theme recognizes. |
+| `childPageWrapper` | — | Optional `{ head, tail }` wrapper around child-page links. Overrides `childPageMarker`. Both values must be non-empty single-line strings. |
 
-All paths are resolved from the generation working directory. Child pages have no public symlinks. Child-page links are written as `<marker> [title](./<page-id>.md)`. The theme must load and route the canonical store itself when child pages should have routes.
+Optional wrapper (overrides `childPageMarker`):
+
+```yaml
+output:
+  childPageWrapper:
+    head: "<noblog-subpage>"
+    tail: "</noblog-subpage>"
+```
+
+All paths are resolved from the generation working directory. Child pages have no public symlinks. Child-page links are written as `<marker> [title](./<page-id>.md)` or, when configured, `<head>[title](./<page-id>.md)<tail>`. The theme must load and route the canonical store itself when child pages should have routes.
 
 ## Notion property mapping
 

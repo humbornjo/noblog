@@ -27,6 +27,10 @@ describe("Noblog YAML config schema", () => {
         layoutPath: "../../layouts/Note.astro",
         recursive: false,
         childPageMarker: "↳",
+        childPageWrapper: {
+          head: "<noblog-subpage>",
+          tail: "</noblog-subpage>",
+        },
       },
       frontmatter: {
         fields: {
@@ -54,6 +58,27 @@ describe("Noblog YAML config schema", () => {
     {
       name: "empty child-page marker",
       input: { version: 1, output: { childPageMarker: "" } },
+    },
+    {
+      name: "empty child-page wrapper head",
+      input: {
+        version: 1,
+        output: {
+          childPageWrapper: { head: "", tail: "</noblog-subpage>" },
+        },
+      },
+    },
+    {
+      name: "multiline child-page wrapper tail",
+      input: {
+        version: 1,
+        output: {
+          childPageWrapper: {
+            head: "<noblog-subpage>",
+            tail: "</noblog-subpage>\n",
+          },
+        },
+      },
     },
     {
       name: "both field sources",

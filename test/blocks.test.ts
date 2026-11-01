@@ -204,6 +204,33 @@ describe("block tree rendering", () => {
     expect(rendered.content).toContain("↳ [Child](./child.md)");
   });
 
+  it("wraps child-page links in a configured wrapper", async () => {
+    const { reader } = readerFor({
+      root: [
+        block({
+          ...blockBase("child"),
+          type: "child_page",
+          child_page: { title: "Child" },
+        }),
+      ],
+    });
+
+    const tree = await loadBlockTree("root", reader);
+    const rendered = await renderBlockTree(tree, {
+      ...context,
+      childPageMarker: "↳",
+      childPageWrapper: {
+        head: "<noblog-subpage>",
+        tail: "</noblog-subpage>",
+      },
+    });
+
+    expect(rendered.content).toContain(
+      "<noblog-subpage>[Child](./child.md)</noblog-subpage>",
+    );
+    expect(rendered.content).not.toContain("↳");
+  });
+
   it("supports custom block transformers with explicit page context", async () => {
     const rendered = await renderBlockTree(
       [{ block: paragraph("paragraph", "Default"), children: [] }],
