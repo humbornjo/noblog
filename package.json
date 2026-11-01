@@ -48,7 +48,7 @@
     "check": "pnpm run typecheck && pnpm run test && pnpm run test:built && publint",
     "prepack": "pnpm run build",
     "release": "pnpm run check && npm publish",
-    "release:beta": "pnpm run check && pnpm publish --tag beta"
+    "release:beta": "pnpm run check && pnpm publish --tag beta --no-git-checks"
   },
   "dependencies": {
     "@notionhq/client": "^5.1.0",
