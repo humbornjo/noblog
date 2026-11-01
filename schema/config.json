@@ -44,6 +44,11 @@
         "recursive": {
           "description": "Render child pages recursively (default: true).",
           "type": "boolean"
+        },
+        "childPageMarker": {
+          "description": "Marker prefixed to child-page links (default: ⸎, U+2E0E).",
+          "type": "string",
+          "minLength": 1
         }
       },
       "additionalProperties": false

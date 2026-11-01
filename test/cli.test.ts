@@ -96,6 +96,7 @@ describe("generate routing and arguments", () => {
           storePath: ".noblog/pages/",
           layoutPath: "../../layouts/MarkdownPostLayout.astro",
           recursive: true,
+          childPageMarker: "⸎",
           verbose: false,
         },
         context.process,
@@ -124,6 +125,7 @@ describe("generate routing and arguments", () => {
         storePath: ".noblog/pages/",
         layoutPath: "../PostLayout.astro",
         recursive: true,
+        childPageMarker: "⸎",
         verbose: true,
       },
       context.process,
@@ -154,6 +156,7 @@ output:
   storePath: config/store
   layoutPath: ../ConfigLayout.astro
   recursive: false
+  childPageMarker: "↳"
 frontmatter:
   fields:
     series:
@@ -173,6 +176,7 @@ frontmatter:
             storePath: "config/store",
             layoutPath: "../ConfigLayout.astro",
             recursive: false,
+            childPageMarker: "↳",
             propertyMap: { series: "Series" },
             frontmatter: expect.any(Function),
             verbose: false,

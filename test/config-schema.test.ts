@@ -26,6 +26,7 @@ describe("Noblog YAML config schema", () => {
         storePath: ".noblog/pages/",
         layoutPath: "../../layouts/Note.astro",
         recursive: false,
+        childPageMarker: "↳",
       },
       frontmatter: {
         fields: {
@@ -49,6 +50,10 @@ describe("Noblog YAML config schema", () => {
     {
       name: "unknown output option",
       input: { version: 1, output: { subPath: "children" } },
+    },
+    {
+      name: "empty child-page marker",
+      input: { version: 1, output: { childPageMarker: "" } },
     },
     {
       name: "both field sources",

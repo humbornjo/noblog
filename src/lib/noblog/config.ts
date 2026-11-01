@@ -107,6 +107,13 @@ export const noblogConfigSchema = z
           .boolean()
           .optional()
           .describe("Render child pages recursively (default: true)."),
+        childPageMarker: z
+          .string()
+          .min(1)
+          .optional()
+          .describe(
+            "Marker prefixed to child-page links (default: ⸎, U+2E0E).",
+          ),
       })
       .optional(),
     frontmatter: z

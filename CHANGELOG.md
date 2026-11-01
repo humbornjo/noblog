@@ -2,6 +2,20 @@
 
 All notable changes to `noblog` are documented in this file.
 
+## [0.3.0-beta.2] - 2026-11-01
+
+### Added
+
+- Configurable child-page link marker via `output.childPageMarker` in YAML and
+  `childPageMarker` in `RenderOptions` / generation options. The marker prefixes
+  links that still target `./<page-id>.md`.
+
+### Changed
+
+- Child-page links now use `⸎` (U+2E0E EDITORIAL CORONIS) by default instead of
+  a hard-coded kaomoji. Themes that recognize child-page links should match the
+  configured marker.
+
 ## [0.3.0-beta.1] - 2026-11-01
 
 This beta contains breaking changes to the generated output layout and the

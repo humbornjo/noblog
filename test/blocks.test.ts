@@ -180,8 +180,28 @@ describe("block tree rendering", () => {
     const tree = await loadBlockTree("root", reader);
     const rendered = await renderBlockTree(tree, context);
 
-    expect(rendered.content).toContain("[Child](./child.md)");
+    expect(rendered.content).toContain("⸎ [Child](./child.md)");
     expect(rendered.childPageIds).toEqual(["child"]);
+  });
+
+  it("supports a custom child-page marker", async () => {
+    const { reader } = readerFor({
+      root: [
+        block({
+          ...blockBase("child"),
+          type: "child_page",
+          child_page: { title: "Child" },
+        }),
+      ],
+    });
+
+    const tree = await loadBlockTree("root", reader);
+    const rendered = await renderBlockTree(tree, {
+      ...context,
+      childPageMarker: "↳",
+    });
+
+    expect(rendered.content).toContain("↳ [Child](./child.md)");
   });
 
   it("supports custom block transformers with explicit page context", async () => {
