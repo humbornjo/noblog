@@ -3,6 +3,10 @@ import type {
   PageObjectResponse,
   RichTextItemResponse,
 } from "@notionhq/client";
+import type {
+  Heading4BlockObjectResponse,
+  NoblogBlock,
+} from "../src/lib/noblog/types.js";
 
 interface TextOptions {
   readonly href?: string;
@@ -78,7 +82,7 @@ export function blockBase(id: string, hasChildren = false): BlockBase {
   };
 }
 
-export function block<Block extends BlockObjectResponse>(value: Block): Block {
+export function block<Block extends NoblogBlock>(value: Block): Block {
   return value;
 }
 
@@ -114,4 +118,19 @@ export function paragraph(
     type: "paragraph",
     paragraph: { rich_text: [text(content)], color: "default" },
   });
+}
+
+export function heading4(
+  id: string,
+  content: string,
+): Heading4BlockObjectResponse {
+  return {
+    ...blockBase(id),
+    type: "heading_4",
+    heading_4: {
+      rich_text: [text(content)],
+      color: "default",
+      is_toggleable: false,
+    },
+  };
 }

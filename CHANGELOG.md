@@ -17,6 +17,13 @@ All notable changes to `noblog` are documented in this file.
 - `childPageMarker` remains the default behavior, with `⸎` (U+2E0E EDITORIAL
   CORONIS) as the built-in prefix.
 
+### Fixed
+
+- Render Notion `heading_4` blocks as `####` Markdown headings instead of
+  dropping them. The current Notion SDK types omit `heading_4`; Noblog models it
+  locally and exports `Heading4BlockObjectResponse` and `NoblogBlock` for
+  type-safe readers and block transformers.
+
 ## [0.3.0-beta.2] - 2026-11-01
 
 ### Added

@@ -10,11 +10,21 @@ export type CalloutIcon = Extract<
   { type: "callout" }
 >["callout"]["icon"];
 
+type Heading1Block = Extract<BlockObjectResponse, { type: "heading_1" }>;
+
+export type Heading4BlockObjectResponse = Omit<
+  Heading1Block,
+  "type" | "heading_1"
+> & {
+  readonly type: "heading_4";
+  readonly heading_4: Heading1Block["heading_1"];
+};
+
+export type NoblogBlock = BlockObjectResponse | Heading4BlockObjectResponse;
+
 export interface NotionReader {
   getPage(pageId: string): Promise<PageObjectResponse>;
-  getBlockChildren(
-    blockId: string,
-  ): Promise<readonly BlockObjectResponse[]>;
+  getBlockChildren(blockId: string): Promise<readonly NoblogBlock[]>;
 }
 
 export interface FrontmatterContext {
@@ -46,16 +56,14 @@ export interface BlockTransformerContext {
 }
 
 export type BlockTransformer<
-  K extends BlockObjectResponse["type"] = BlockObjectResponse["type"],
+  K extends NoblogBlock["type"] = NoblogBlock["type"],
 > = (
-  block: Extract<BlockObjectResponse, { type: K }>,
+  block: Extract<NoblogBlock, { type: K }>,
   context: BlockTransformerContext,
 ) => string | undefined | Promise<string | undefined>;
 
 export type BlockTransformers = {
-  readonly [K in BlockObjectResponse["type"]]?:
-    | BlockTransformer<K>
-    | undefined;
+  readonly [K in NoblogBlock["type"]]?: BlockTransformer<K> | undefined;
 };
 
 export interface ChildPageWrapper {

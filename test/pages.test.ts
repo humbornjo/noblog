@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
-import type {
-  BlockObjectResponse,
-  PageObjectResponse,
-} from "@notionhq/client";
+import type { PageObjectResponse } from "@notionhq/client";
 import { renderPage, renderPages } from "../src/lib/noblog/pages.js";
-import type { NotionReader } from "../src/lib/noblog/types.js";
+import type {
+  NoblogBlock,
+  NotionReader,
+} from "../src/lib/noblog/types.js";
 import { block, blockBase, page, paragraph, text } from "./fixtures.js";
 
 function properties(title: string): PageObjectResponse["properties"] {
@@ -31,7 +31,7 @@ function properties(title: string): PageObjectResponse["properties"] {
 
 function readerFor(
   pages: ReadonlyMap<string, PageObjectResponse>,
-  blocks: Readonly<Record<string, BlockObjectResponse[]>>,
+  blocks: Readonly<Record<string, NoblogBlock[]>>,
 ) {
   const getPage = vi.fn<NotionReader["getPage"]>(async (id) => {
     const result = pages.get(id);
