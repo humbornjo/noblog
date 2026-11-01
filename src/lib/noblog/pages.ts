@@ -1,6 +1,9 @@
 import type { PageObjectResponse } from "@notionhq/client";
 import { loadBlockTree, renderBlockTree } from "./blocks.js";
-import { DEFAULT_LAYOUT_PATH } from "./defaults.js";
+import {
+  DEFAULT_CHILD_PAGE_MARKER,
+  DEFAULT_LAYOUT_PATH,
+} from "./defaults.js";
 import { renderFrontmatter } from "./frontmatter.js";
 import type { NotionPropertyMap } from "./config.js";
 import type {
@@ -18,6 +21,7 @@ interface PageRenderContext {
   readonly propertyMap: NotionPropertyMap | undefined;
   readonly frontmatter: FrontmatterAdapter | undefined;
   readonly recursive: boolean;
+  readonly childPageMarker: string;
   readonly transformers: BlockTransformers | undefined;
   readonly renderedPages: Map<string, Promise<RenderedPage>>;
 }
@@ -61,6 +65,7 @@ function createContext(
     propertyMap: options.propertyMap,
     frontmatter: options.frontmatter,
     recursive: options.recursive ?? true,
+    childPageMarker: options.childPageMarker ?? DEFAULT_CHILD_PAGE_MARKER,
     transformers: options.transformers,
     renderedPages: new Map(),
   };
@@ -98,6 +103,7 @@ async function renderSinglePage(
   ]);
   const rendered = await renderBlockTree(blockTree, {
     pageId,
+    childPageMarker: context.childPageMarker,
     ...(context.transformers !== undefined
       ? { transformers: context.transformers }
       : {}),

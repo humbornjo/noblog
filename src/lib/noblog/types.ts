@@ -61,6 +61,7 @@ export type BlockTransformers = {
 export interface RenderOptions {
   readonly layoutPath?: string;
   readonly recursive?: boolean;
+  readonly childPageMarker?: string;
   readonly propertyMap?: NotionPropertyMap;
   readonly frontmatter?: FrontmatterAdapter;
   readonly transformers?: BlockTransformers;

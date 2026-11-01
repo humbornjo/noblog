@@ -1,4 +1,5 @@
 import type { BlockObjectResponse } from "@notionhq/client";
+import { DEFAULT_CHILD_PAGE_MARKER } from "./defaults.js";
 import * as md from "./markdown.js";
 import { renderPlainText, renderRichText } from "./rich-text.js";
 import type {
@@ -13,6 +14,7 @@ export interface BlockNode {
 }
 
 export interface BlockRenderContext extends BlockTransformerContext {
+  readonly childPageMarker?: string;
   readonly transformers?: BlockTransformers;
 }
 
@@ -137,7 +139,12 @@ async function renderBlockNode(
 ): Promise<string> {
   const { block } = node;
   const transformed = await transformBlock(block.type, block, context);
-  const content = transformed ?? (await renderDefaultBlock(node));
+  const content =
+    transformed ??
+    (await renderDefaultBlock(
+      node,
+      context.childPageMarker ?? DEFAULT_CHILD_PAGE_MARKER,
+    ));
 
   switch (block.type) {
     case "toggle":
@@ -179,7 +186,10 @@ function withIndentedChildren(
   return `${content}\n${indented}`;
 }
 
-async function renderDefaultBlock(node: BlockNode): Promise<string> {
+async function renderDefaultBlock(
+  node: BlockNode,
+  childPageMarker: string,
+): Promise<string> {
   const { block } = node;
 
   switch (block.type) {
@@ -216,7 +226,7 @@ async function renderDefaultBlock(node: BlockNode): Promise<string> {
       return md.link(block.type, `https://www.notion.so/${id}`);
     }
     case "child_page":
-      return renderChildPageLink(block);
+      return renderChildPageLink(block, childPageMarker);
     case "child_database":
       return md.heading2(block.child_database.title || "child_database");
     case "table":
@@ -281,8 +291,10 @@ function renderFileLink(content: FileContent, fallbackTitle: string): string {
 
 function renderChildPageLink(
   block: Extract<BlockObjectResponse, { type: "child_page" }>,
+  marker: string,
 ): string {
-  return `(」ﾟﾛﾟ)｣ ${md.link(block.child_page.title, `./${block.id}.md`)}`;
+  // The theme consumes this marker to render child pages as subpage links.
+  return `${marker} ${md.link(block.child_page.title, `./${block.id}.md`)}`;
 }
 
 function renderTable(

@@ -13,6 +13,7 @@ export interface GenerateOptions {
   storePath: string;
   layoutPath: string;
   recursive: boolean;
+  childPageMarker: string;
   propertyMap?: NotionPropertyMap;
   frontmatter?: FrontmatterAdapter;
   verbose: boolean;
@@ -49,6 +50,7 @@ export async function generateBlog(
   const pages = await renderPages(posts, notion, {
     layoutPath: storeLayoutPath,
     recursive: options.recursive,
+    childPageMarker: options.childPageMarker,
     ...(options.propertyMap !== undefined
       ? { propertyMap: options.propertyMap }
       : {}),

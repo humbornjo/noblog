@@ -2,6 +2,7 @@ import { ConfigurationError, loadConfig } from "../config.js";
 import { loadNoblogConfig } from "../config-file.js";
 import type { CliContext } from "../context.js";
 import {
+  DEFAULT_CHILD_PAGE_MARKER,
   DEFAULT_LAYOUT_PATH,
   DEFAULT_SAVE_PATH,
   DEFAULT_STORE_PATH,
@@ -52,6 +53,8 @@ export default async function generate(
         layoutPath:
           flags.layout ?? fileConfig?.output?.layoutPath ?? DEFAULT_LAYOUT_PATH,
         recursive: fileConfig?.output?.recursive ?? true,
+        childPageMarker:
+          fileConfig?.output?.childPageMarker ?? DEFAULT_CHILD_PAGE_MARKER,
         ...(propertyMap !== undefined ? { propertyMap } : {}),
         ...(frontmatter !== undefined ? { frontmatter } : {}),
         verbose: flags.verbose,

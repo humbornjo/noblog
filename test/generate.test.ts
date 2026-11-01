@@ -52,6 +52,7 @@ describe("generateBlog", () => {
       storePath: "store",
       layoutPath: "../Layout.astro",
       recursive: false,
+      childPageMarker: "↳",
       propertyMap,
       frontmatter,
       verbose: false,
@@ -67,6 +68,7 @@ describe("generateBlog", () => {
     expect(mocks.renderPages).toHaveBeenCalledWith([], mocks.notion, {
       layoutPath: "../Layout.astro",
       recursive: false,
+      childPageMarker: "↳",
       propertyMap,
       frontmatter,
     });
@@ -94,6 +96,7 @@ describe("generateBlog", () => {
         storePath: "store",
         layoutPath: "../Layout.astro",
         recursive: true,
+        childPageMarker: "⸎",
         verbose: true,
       },
       output,
