@@ -3,6 +3,7 @@ import type { NotionPropertyMap } from "../lib/noblog/config.js";
 import {
   DEFAULT_SELFIE_PATH,
   findSelfiePage,
+  relativizeStoreLinks,
   renderPages,
   resolveStoreLayoutPath,
   upsertFrontmatterAuthor,
@@ -82,7 +83,10 @@ export async function generateBlog(
     const match = findSelfiePage(posts, selfieTitle, options.propertyMap);
     const rendered = pages.find((page) => page.id === match?.page.id);
     if (match && rendered) {
-      const content = upsertFrontmatterAuthor(rendered.content, match.title);
+      const content = upsertFrontmatterAuthor(
+        relativizeStoreLinks(rendered.content, selfiePath, options.storePath),
+        match.title,
+      );
       await writeSelfie(content, selfiePath);
       if (options.verbose) {
         output.stderr.write(

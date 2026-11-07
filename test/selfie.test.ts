@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   findSelfiePage,
+  relativizeStoreLinks,
   upsertFrontmatterAuthor,
 } from "../src/lib/noblog/selfie.js";
 import { writeSelfie } from "../src/lib/noblog/writer.js";
@@ -92,6 +93,51 @@ describe("upsertFrontmatterAuthor", () => {
     expect(upsertFrontmatterAuthor("# Body\n", "humbornjo")).toBe(
       '---\nauthor: "humbornjo"\n---\n# Body\n',
     );
+  });
+});
+
+describe("relativizeStoreLinks", () => {
+  const childId = "3ce6b0cb-98ec-4af7-a6b6-6a50a7b4e0e1";
+
+  it("rewrites child links for a selfie next to the store directory", () => {
+    const content = `Body\n\n⸎ [Child](./${childId}.md)\n`;
+
+    expect(
+      relativizeStoreLinks(content, ".noblog/selfie.md", ".noblog/pages"),
+    ).toBe(`Body\n\n⸎ [Child](./pages/${childId}.md)\n`);
+  });
+
+  it("rewrites wrapped child links", () => {
+    const content = `<sub>[Child](./${childId}.md)</sub>\n`;
+
+    expect(
+      relativizeStoreLinks(content, ".noblog/selfie.md", ".noblog/pages"),
+    ).toBe(`<sub>[Child](./pages/${childId}.md)</sub>\n`);
+  });
+
+  it("leaves links unchanged when the selfie sits in the store directory", () => {
+    const content = `⸎ [Child](./${childId}.md)\n`;
+
+    expect(
+      relativizeStoreLinks(content, ".noblog/pages/selfie.md", ".noblog/pages"),
+    ).toBe(content);
+  });
+
+  it("resolves custom store and selfie paths", () => {
+    const content = `⸎ [Child](./${childId}.md)\n`;
+
+    expect(
+      relativizeStoreLinks(content, "public/selfie.md", "content/.db"),
+    ).toBe(`⸎ [Child](./../content/.db/${childId}.md)\n`);
+  });
+
+  it("leaves non-store relative links and absolute links untouched", () => {
+    const content =
+      `[asset](./image.png)\n[uuid-asset](./${childId}.png)\n[web](https://example.com/${childId}.md)\n`;
+
+    expect(
+      relativizeStoreLinks(content, ".noblog/selfie.md", ".noblog/pages"),
+    ).toBe(content);
   });
 });
 

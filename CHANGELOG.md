@@ -2,6 +2,20 @@
 
 All notable changes to `noblog` are documented in this file.
 
+## [0.3.0-beta.5] - 2026-11-07
+
+### Changed
+
+- The default `output.selfiePath` moved from `public/selfie.md` to
+  `.noblog/selfie.md`, next to the canonical store, so generated content stays
+  under one root and the site's `public/` directory is not rewritten.
+
+### Fixed
+
+- Child-page links inside the written selfie file are now rewritten relative to
+  the selfie file's directory (for example `./pages/<page-id>.md`), so a bio
+  page that references store pages keeps working links in both directions.
+
 ## [0.3.0-beta.4] - 2026-11-07
 
 ### Added

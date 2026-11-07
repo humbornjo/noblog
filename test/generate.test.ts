@@ -214,6 +214,32 @@ describe("generateBlog", () => {
       expect(await readFile(selfiePath, "utf8")).toBe("committed sample\n");
     });
 
+    it("relativizes child-page links in the written selfie file", async () => {
+      const childId = "3ce6b0cb-98ec-4af7-a6b6-6a50a7b4e0e1";
+      mocks.notion.listPages.mockResolvedValue([bioPage()]);
+      mocks.renderPages.mockResolvedValue([
+        {
+          id: "bio",
+          content: `---\ntitle: "humbornjo"\n---\n⸎ [Project](./${childId}.md)\n`,
+          childPageIds: [childId],
+          isDatabasePage: true,
+        },
+      ]);
+      const selfiePath = join(directory, ".noblog", "selfie.md");
+      const storePath = join(directory, ".noblog", "pages");
+
+      await generateBlog(
+        { notionApiSecret: "secret", databaseId: "database" },
+        { ...options(selfiePath, "humbornjo"), storePath },
+        output(),
+      );
+
+      const written = await readFile(selfiePath, "utf8");
+      expect(written).toContain(`](./pages/${childId}.md)`);
+      expect(written).toContain('author: "humbornjo"');
+      expect(written).not.toContain(`](./${childId}.md)`);
+    });
+
     it("writes verbose diagnostics for written and missing selfie pages", async () => {
       mocks.notion.listPages.mockResolvedValue([bioPage()]);
       mocks.renderPages.mockResolvedValue([
