@@ -32,6 +32,7 @@ output:
 | `recursive` | `true` | Collect and render child pages recursively. |
 | `childPageMarker` | `⸎` (U+2E0E EDITORIAL CORONIS) | Non-empty prefix added to child-page links. Set it to the marker the theme recognizes. |
 | `childPageWrapper` | — | Optional `{ head, tail }` wrapper around child-page links. Overrides `childPageMarker`. Both values must be non-empty single-line strings. |
+| `selfiePath` | `public/selfie.md` | Output file for the page named by `--selfie PAGE_TITLE`. Written only when the title matches a database page; otherwise the existing file is left untouched. |
 
 Optional wrapper (overrides `childPageMarker`):
 

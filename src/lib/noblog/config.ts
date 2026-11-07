@@ -132,6 +132,13 @@ export const noblogConfigSchema = z
           .describe(
             "Optional wrapper around child-page Markdown links; overrides childPageMarker.",
           ),
+        selfiePath: z
+          .string()
+          .min(1)
+          .optional()
+          .describe(
+            "Output file for the page named by --selfie (default: public/selfie.md).",
+          ),
       })
       .optional(),
     frontmatter: z

@@ -2,6 +2,25 @@
 
 All notable changes to `noblog` are documented in this file.
 
+## [0.3.0-beta.4] - 2026-11-07
+
+### Added
+
+- `noblog generate --selfie PAGE_TITLE` renders the database page whose title
+  matches to the selfie output file, with frontmatter `author` set to the page
+  title so consumer sites can render it. The page is matched by its rendered
+  title, honoring `notion.properties` mappings.
+- New `output.selfiePath` YAML option (default `public/selfie.md`) for the
+  selfie output file.
+- New library helpers `findSelfiePage`, `upsertFrontmatterAuthor`, and
+  `writeSelfie`, plus the `DEFAULT_SELFIE_PATH` default.
+
+### Changed
+
+- When `--selfie` is omitted or empty, or no page title matches, the selfie
+  output file is left untouched, so committed sample content remains the
+  fallback.
+
 ## [0.3.0-beta.3] - 2026-11-01
 
 ### Added

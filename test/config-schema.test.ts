@@ -31,6 +31,7 @@ describe("Noblog YAML config schema", () => {
           head: "<noblog-subpage>",
           tail: "</noblog-subpage>",
         },
+        selfiePath: "public/selfie.md",
       },
       frontmatter: {
         fields: {
@@ -79,6 +80,10 @@ describe("Noblog YAML config schema", () => {
           },
         },
       },
+    },
+    {
+      name: "empty selfie path",
+      input: { version: 1, output: { selfiePath: "" } },
     },
     {
       name: "both field sources",

@@ -5,6 +5,7 @@ import {
   DEFAULT_CHILD_PAGE_MARKER,
   DEFAULT_LAYOUT_PATH,
   DEFAULT_SAVE_PATH,
+  DEFAULT_SELFIE_PATH,
   DEFAULT_STORE_PATH,
 } from "../lib/noblog/defaults.js";
 import {
@@ -17,6 +18,7 @@ interface GenerateFlags {
   config?: string;
   layout?: string;
   store?: string;
+  selfie?: string;
 }
 
 export default async function generate(
@@ -56,9 +58,11 @@ export default async function generate(
         recursive: fileConfig?.output?.recursive ?? true,
         childPageMarker:
           fileConfig?.output?.childPageMarker ?? DEFAULT_CHILD_PAGE_MARKER,
+        selfiePath: fileConfig?.output?.selfiePath ?? DEFAULT_SELFIE_PATH,
         ...(childPageWrapper !== undefined ? { childPageWrapper } : {}),
         ...(propertyMap !== undefined ? { propertyMap } : {}),
         ...(frontmatter !== undefined ? { frontmatter } : {}),
+        ...(flags.selfie !== undefined ? { selfie: flags.selfie } : {}),
         verbose: flags.verbose,
       },
       this.process,

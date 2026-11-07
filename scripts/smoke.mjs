@@ -137,6 +137,9 @@ const library = requireRecord(
 requireFunction(library, "renderPage");
 requireFunction(library, "renderPages");
 requireFunction(library, "writePages");
+requireFunction(library, "writeSelfie");
+requireFunction(library, "findSelfiePage");
+requireFunction(library, "upsertFrontmatterAuthor");
 requireFunction(library, "createNotionSource");
 requireFunction(library, "resolveStoreLayoutPath");
 requireFunction(library, "createFrontmatterAdapter");

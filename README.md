@@ -95,6 +95,9 @@ noblog --store content/.noblog-pages
 # Generate using YAML configuration
 noblog --config ./noblog.yaml
 
+# Also render the page titled "humbornjo" to public/selfie.md
+noblog --selfie humbornjo
+
 # Validate configuration without credentials or Notion access
 noblog config check --config ./noblog.yaml
 
@@ -164,6 +167,16 @@ output:
 ```
 
 When configured, the wrapper overrides `output.childPageMarker`. Both strings must be non-empty and single-line. The wrapper is emitted as raw content, so use it with an HTML-capable Markdown renderer.
+
+### Selfie page
+
+`--selfie PAGE_TITLE` renders the database page with that exact title to `output.selfiePath` (default `public/selfie.md`) in addition to the normal output. The written frontmatter always carries `author: <page title>`, so a consumer site can render the author (for example in a footer) from the page itself. This suits builds that pull a bio page from a personal Notion database:
+
+```bash
+noblog --selfie humbornjo
+```
+
+The page is matched by its rendered title, honoring `notion.properties` mappings such as `title: Name`. When `--selfie` is omitted or empty, or no page title matches, the selfie file is left untouched — commit a sample `public/selfie.md` and everyone without a matching page falls back to it.
 
 The keys under `notion.properties` are logical source names; their values must exactly match Notion property names. Custom sources such as `series` must be declared there before frontmatter can reference them. Built-in sources need no declaration.
 
