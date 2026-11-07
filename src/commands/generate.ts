@@ -31,6 +31,13 @@ export const generateCommand = buildCommand({
         parse: (input) => input,
         optional: true,
       },
+      selfie: {
+        kind: "parsed",
+        brief: "Render the database page with this title to output.selfiePath",
+        placeholder: "PAGE_TITLE",
+        parse: (input) => input,
+        optional: true,
+      },
     },
     aliases: {
       v: "verbose",
@@ -58,6 +65,9 @@ export const generateCommand = buildCommand({
     fullDescription:
       "Fetch published pages from Notion and write Astro-compatible Markdown files. " +
       "Only database posts receive public symlinks; child pages live in the canonical store. " +
-      "The legacy SUB_PATH argument is accepted but ignored.",
+      "The legacy SUB_PATH argument is accepted but ignored. " +
+      "With --selfie PAGE_TITLE, the matching database page is also rendered to output.selfiePath " +
+      "(default public/selfie.md) with frontmatter author set to the page title; " +
+      "when the title is empty or matches no page, the selfie file is left untouched.",
   },
 });

@@ -13,6 +13,7 @@ import { getErrorCode } from "../errors.js";
 import {
   DEFAULT_LAYOUT_PATH,
   DEFAULT_SAVE_PATH,
+  DEFAULT_SELFIE_PATH,
   DEFAULT_STORE_PATH,
 } from "./defaults.js";
 import type {
@@ -47,6 +48,18 @@ export async function writePages(
   }
 
   return writtenPaths;
+}
+
+export async function writeSelfie(
+  content: string,
+  selfiePath: string = DEFAULT_SELFIE_PATH,
+): Promise<string> {
+  const directory = dirname(selfiePath);
+  if (directory !== ".") {
+    await mkdir(directory, { recursive: true });
+  }
+  await writeFile(selfiePath, content, "utf8");
+  return selfiePath;
 }
 
 export function resolveStoreLayoutPath(

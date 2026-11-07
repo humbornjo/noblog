@@ -17,6 +17,8 @@ Nobloger uses file-based Markdown routes and `Astro.glob("@/pages/posts/*.md")`.
 
 The existing glob does not list child pages in the hidden store. A theme route must explicitly load that store to expose children. Noblog does not recreate the removed `nob_children` routes.
 
+When the Nobloger site renders `frontmatter.author` in its footer, the author's build can pass `--selfie humbornjo` so the bio page from the author's database is written to `output.selfiePath` with `author` set to the page title. Other builds, and builds with no matching title, keep the committed `public/selfie.md` sample.
+
 ## ThoughtLite
 
 Evidence inspected: `src/content.config.ts` in [tuyuritio/astro-theme-thought-lite](https://github.com/tuyuritio/astro-theme-thought-lite). Its `note` collection loads `./src/content/note/**/*.md` and validates `title`, native date `timestamp`, optional `series`, `tags`, `description`, and native `sensitive`, `toc`, `top`, and `draft` controls.

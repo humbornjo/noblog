@@ -1,9 +1,13 @@
 import type { NoblogConfig } from "../config.js";
 import type { NotionPropertyMap } from "../lib/noblog/config.js";
 import {
+  DEFAULT_SELFIE_PATH,
+  findSelfiePage,
   renderPages,
   resolveStoreLayoutPath,
+  upsertFrontmatterAuthor,
   writePages,
+  writeSelfie,
 } from "../lib/noblog/index.js";
 import type {
   ChildPageWrapper,
@@ -20,6 +24,8 @@ export interface GenerateOptions {
   childPageWrapper?: ChildPageWrapper;
   propertyMap?: NotionPropertyMap;
   frontmatter?: FrontmatterAdapter;
+  selfie?: string;
+  selfiePath?: string;
   verbose: boolean;
 }
 
@@ -69,6 +75,27 @@ export async function generateBlog(
     savePath: options.savePath,
     storePath: options.storePath,
   });
+
+  const selfieTitle = options.selfie?.trim() ?? "";
+  if (selfieTitle !== "") {
+    const selfiePath = options.selfiePath ?? DEFAULT_SELFIE_PATH;
+    const match = findSelfiePage(posts, selfieTitle, options.propertyMap);
+    const rendered = pages.find((page) => page.id === match?.page.id);
+    if (match && rendered) {
+      const content = upsertFrontmatterAuthor(rendered.content, match.title);
+      await writeSelfie(content, selfiePath);
+      if (options.verbose) {
+        output.stderr.write(
+          `Wrote selfie page "${match.title}" to ${selfiePath}\n`,
+        );
+      }
+    } else if (options.verbose) {
+      output.stderr.write(
+        `Selfie page "${selfieTitle}" not found in the database; ` +
+          `leaving ${selfiePath} untouched\n`,
+      );
+    }
+  }
 
   output.stdout.write("✅ Successfully generated blog content\n");
 }

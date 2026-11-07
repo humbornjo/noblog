@@ -6,5 +6,6 @@ export * from "./markdown.js";
 export * from "./metadata.js";
 export * from "./pages.js";
 export * from "./rich-text.js";
+export * from "./selfie.js";
 export * from "./types.js";
 export * from "./writer.js";

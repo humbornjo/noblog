@@ -97,6 +97,7 @@ describe("generate routing and arguments", () => {
           layoutPath: "../../layouts/MarkdownPostLayout.astro",
           recursive: true,
           childPageMarker: "⸎",
+          selfiePath: "public/selfie.md",
           verbose: false,
         },
         context.process,
@@ -126,11 +127,27 @@ describe("generate routing and arguments", () => {
         layoutPath: "../PostLayout.astro",
         recursive: true,
         childPageMarker: "⸎",
+        selfiePath: "public/selfie.md",
         verbose: true,
       },
       context.process,
     );
     expect(stderr()).toContain("SUB_PATH is deprecated and ignored");
+  });
+
+  it("passes the selfie title and output path through", async () => {
+    const { context, generateBlog } = createTestContext();
+
+    await runCli(["--selfie", "humbornjo"], context);
+
+    expect(generateBlog).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.objectContaining({
+        selfie: "humbornjo",
+        selfiePath: "public/selfie.md",
+      }),
+      context.process,
+    );
   });
 
   it("accepts a custom canonical page store", async () => {
@@ -160,6 +177,7 @@ output:
   childPageWrapper:
     head: "<noblog-subpage>"
     tail: "</noblog-subpage>"
+  selfiePath: public/bio.md
 frontmatter:
   fields:
     series:
@@ -184,6 +202,7 @@ frontmatter:
               head: "<noblog-subpage>",
               tail: "</noblog-subpage>",
             },
+            selfiePath: "public/bio.md",
             propertyMap: { series: "Series" },
             frontmatter: expect.any(Function),
             verbose: false,
