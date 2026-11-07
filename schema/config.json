@@ -74,7 +74,7 @@
           "additionalProperties": false
         },
         "selfiePath": {
-          "description": "Output file for the page named by --selfie (default: public/selfie.md).",
+          "description": "Output file for the page named by --selfie (default: .noblog/selfie.md).",
           "type": "string",
           "minLength": 1
         }

@@ -1,4 +1,5 @@
 import type { PageObjectResponse } from "@notionhq/client";
+import { dirname, relative, resolve, sep } from "node:path";
 import type { NotionPropertyMap } from "./config.js";
 import { extractPageMetadata } from "./metadata.js";
 
@@ -50,5 +51,36 @@ export function upsertFrontmatterAuthor(
     .filter((line) => !/^author\s*:/u.test(line));
   return ["---", authorLine, ...frontmatterLines, ...lines.slice(closing)].join(
     "\n",
+  );
+}
+
+// Child-page links emitted by the renderer target `./<page-id>.md`, which
+// only resolves for files sitting in the canonical store directory.
+const STORE_CHILD_LINK = /\]\(\.\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\.md\)/g;
+
+/**
+ * Rewrite `./<page-id>.md` child-page links so they resolve from the selfie
+ * file's directory instead of the canonical store directory. Links are left
+ * unchanged when the selfie file already sits next to the store files, and
+ * non-store relative links (for example user asset links) are never touched.
+ */
+export function relativizeStoreLinks(
+  content: string,
+  selfiePath: string,
+  storePath: string,
+): string {
+  const storeDirectory = relative(
+    dirname(resolve(selfiePath)),
+    resolve(storePath),
+  );
+  const prefix =
+    storeDirectory === ""
+      ? ""
+      : `${storeDirectory.split(sep).join("/")}/`;
+  if (prefix === "") return content;
+
+  return content.replace(
+    STORE_CHILD_LINK,
+    (_, pageId: string) => `](./${prefix}${pageId}.md)`,
   );
 }

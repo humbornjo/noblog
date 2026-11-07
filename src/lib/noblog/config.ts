@@ -137,7 +137,7 @@ export const noblogConfigSchema = z
           .min(1)
           .optional()
           .describe(
-            "Output file for the page named by --selfie (default: public/selfie.md).",
+            "Output file for the page named by --selfie (default: .noblog/selfie.md).",
           ),
       })
       .optional(),

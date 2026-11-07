@@ -140,6 +140,7 @@ requireFunction(library, "writePages");
 requireFunction(library, "writeSelfie");
 requireFunction(library, "findSelfiePage");
 requireFunction(library, "upsertFrontmatterAuthor");
+requireFunction(library, "relativizeStoreLinks");
 requireFunction(library, "createNotionSource");
 requireFunction(library, "resolveStoreLayoutPath");
 requireFunction(library, "createFrontmatterAdapter");

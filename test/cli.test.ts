@@ -97,7 +97,7 @@ describe("generate routing and arguments", () => {
           layoutPath: "../../layouts/MarkdownPostLayout.astro",
           recursive: true,
           childPageMarker: "⸎",
-          selfiePath: "public/selfie.md",
+          selfiePath: ".noblog/selfie.md",
           verbose: false,
         },
         context.process,
@@ -127,7 +127,7 @@ describe("generate routing and arguments", () => {
         layoutPath: "../PostLayout.astro",
         recursive: true,
         childPageMarker: "⸎",
-        selfiePath: "public/selfie.md",
+        selfiePath: ".noblog/selfie.md",
         verbose: true,
       },
       context.process,
@@ -144,7 +144,7 @@ describe("generate routing and arguments", () => {
       expect.any(Object),
       expect.objectContaining({
         selfie: "humbornjo",
-        selfiePath: "public/selfie.md",
+        selfiePath: ".noblog/selfie.md",
       }),
       context.process,
     );
